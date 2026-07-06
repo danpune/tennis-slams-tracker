@@ -45,6 +45,12 @@ h2 b{color:var(--acc)}
 .match .st{font-size:11px;color:var(--muted);text-align:right;flex:0 0 auto}
 .match.live{border-left:3px solid var(--live)}
 .match.live .st{color:var(--live);font-weight:700}
+.brief{background:var(--card);border:1px solid var(--line);border-left:4px solid var(--acc);border-radius:12px;padding:14px 16px;margin-bottom:14px}
+.brief .bt{font-weight:800;font-size:15px;margin-bottom:8px}
+.brief .bl{font-size:13.5px;padding:3px 0;color:var(--text)}
+.brief .bl b{color:var(--acc)}
+.brief .alert{color:#ff8a78;font-weight:700}
+.brief .dim{color:var(--muted)}
 .champline{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:10px 14px;margin-bottom:8px;font-size:14px}
 .champline b{color:var(--acc)}
 /* roll of honour */
@@ -99,6 +105,7 @@ a{color:#9fc3ab}
 
  <section id="livewrap" style="display:none">
   <h2 id="livehead"></h2>
+  <div class="brief" id="brief" style="display:none"></div>
   <div id="champs"></div>
   <div class="chips" id="drawchips"></div>
   <div class="chips" id="roundchips"></div>
@@ -236,6 +243,42 @@ function renderMatches(){
   return '<div class="match'+(live?" live":"")+'"><div class="who">'+row(m.a)+row(m.b)+'</div><div class="st">'+(m._draw?esc(m._draw)+" · ":"")+esc(m.round&&m._draw?m.round:(m.done?"Completed":m.state||"Scheduled"))+(m.date?"<br>"+new Date(m.date).toLocaleDateString(undefined,{month:"short",day:"numeric"}):"")+"</div></div>";
  }).join("")||'<p class="note">'+(follOnly?"None of your followed players/countries are in this Slam — add more above.":"No matches in this round yet.")+"</p>";
 }
+/* Catch-up brief: "haven't followed? here's where we are" — generated purely from the data */
+function renderBrief(slam){
+ const el=document.getElementById("brief");
+ const start=Date.parse(slam.start),end=Date.parse(slam.end),now=Date.now();
+ if(!(now>=start-864e5&&now<=end+2*864e5)){el.style.display="none";return;}   /* only while the Slam runs */
+ const day=Math.max(1,Math.floor((now-start)/864e5)+1),total=Math.round((end-start)/864e5)+1;
+ const lines=[];
+ const short=nm=>nm.split(" / ").length>1?nm.split(" / ").map(x=>x.split(" ").pop()).join("/"):nm;
+ slam.draws.forEach(dr=>{
+  const ms=dr.matches;
+  const fin=ms.find(m=>m.done&&m.round==="Final");
+  if(fin){const w=fin.a.w?fin.a:fin.b,l=w===fin.a?fin.b:fin.a;
+   lines.push('<div class="bl">🏆 <b>'+esc(dr.draw)+'</b> — champion: <b>'+esc(w.n)+'</b> <span class="dim">beat '+esc(l.n)+"</span></div>");return;}
+  const live=ms.filter(m=>!m.done&&m.state&&!/sched/i.test(m.state)&&m.a.n!=="TBD");
+  if(live.length){lines.push('<div class="bl">🔴 <b>'+esc(dr.draw)+"</b> — "+esc(live[0].round)+" in progress: "+esc(short(live[0].a.n))+" v "+esc(short(live[0].b.n))+"</div>");return;}
+  const pend=roundOrder.map(r=>ms.filter(m=>m.round===r&&!m.done&&m.a.n!=="TBD")).find(x=>x.length);
+  if(pend&&pend.length){const dt=pend[0].date?new Date(pend[0].date).toLocaleDateString(undefined,{weekday:"short",month:"short",day:"numeric"}):"";
+   lines.push('<div class="bl">▶ <b>'+esc(dr.draw)+"</b> — next: "+esc(pend[0].round)+(dt?' <span class="dim">('+dt+")</span>":"")+": "+pend.slice(0,2).map(m=>esc(short(m.a.n))+" v "+esc(short(m.b.n))).join(" · ")+"</div>");return;}
+  const done=roundOrder.find(r=>ms.some(m=>m.round===r&&m.done));
+  if(done)lines.push('<div class="bl">▶ <b>'+esc(dr.draw)+"</b> — "+esc(done)+" complete</div>");
+ });
+ /* top-10 watch: eliminations + survivors in the singles draws */
+ const rk={};["atp","wta"].forEach(t=>(DATA.rankings?.[t]||[]).forEach(x=>rk[x.name]=x.rank));
+ const outs=[],alive=[];
+ slam.draws.slice(0,2).forEach(dr=>{
+  const seen={};
+  dr.matches.forEach(m=>{if(!m.done)return;
+   [[m.a,m.b],[m.b,m.a]].forEach(([side,opp])=>{if(rk[side.n]!=null)seen[side.n]={r:m.round,w:side.w,opp:opp.n};});});
+  Object.entries(seen).forEach(([nm,x])=>{(x.w?alive:outs).push({nm,rank:rk[nm],r:x.r,opp:x.opp});});
+ });
+ outs.sort((a,b)=>a.rank-b.rank);alive.sort((a,b)=>a.rank-b.rank);
+ if(outs.length)lines.push('<div class="bl"><span class="alert">🚨 Top-10 out:</span> '+outs.slice(0,4).map(o=>"#"+o.rank+" "+esc(o.nm)+' <span class="dim">('+esc(o.r)+", lost to "+esc(short(o.opp))+")</span>").join(" · ")+"</div>");
+ if(alive.length)lines.push('<div class="bl"><span class="dim">Still in it:</span> '+alive.slice(0,6).map(a=>"#"+a.rank+" "+esc(a.nm)).join(", ")+"</div>");
+ el.innerHTML='<div class="bt">📖 Catching up — Day '+day+" of "+total+" at "+esc(slam.name)+"</div>"+lines.join("");
+ el.style.display="";
+}
 function renderChamps(slam){
  const fin=[];
  slam.draws.forEach(dr=>{const f=dr.matches.find(m=>m.done&&m.round==="Final");
@@ -285,7 +328,7 @@ async function boot(){
    if(DATA.slams.length){
     document.getElementById("livewrap").style.display="";
     document.getElementById("livehead").innerHTML="🎾 <b>"+esc(DATA.slams[0].name)+"</b> — every draw, every result";
-    renderChamps(DATA.slams[0]);renderMatches();
+    renderBrief(DATA.slams[0]);renderChamps(DATA.slams[0]);renderMatches();
    }
    renderRanks();
   }
