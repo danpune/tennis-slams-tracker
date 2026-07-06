@@ -88,6 +88,7 @@ h2 b{color:var(--acc)}
 footer{margin:44px 0 26px;padding-top:14px;border-top:1px solid var(--line);color:var(--muted);font-size:12px}
 .note{font-size:12px;color:var(--muted)}
 a{color:#9fc3ab}
+.hlnk{font-size:11.5px;text-decoration:none;white-space:nowrap}
 </style>
 </head>
 <body>
@@ -221,7 +222,7 @@ document.addEventListener("click",e=>{
  const f=e.target.closest("#folltog");if(f){follOnly=!follOnly;renderMatches();}
 });
 /* ── live slam results ── */
-let DATA=null,curDraw=0,curRound=null,follOnly=false;
+let DATA=null,HL={},curDraw=0,curRound=null,follOnly=false;
 const roundOrder=["Final","Semifinal","Quarterfinal","Round 4","Round 3","Round 2","Round 1","Qualifying Final","Qualifying 2nd Round","Qualifying 1st Round"];
 function rounds(dr){const rs=[...new Set(dr.matches.map(m=>m.round).filter(Boolean))];
  return rs.sort((a,b)=>{const ia=roundOrder.findIndex(r=>a.startsWith(r)),ib=roundOrder.findIndex(r=>b.startsWith(r));return (ia<0?99:ia)-(ib<0?99:ib);});}
@@ -240,7 +241,7 @@ function renderMatches(){
  document.getElementById("matches").innerHTML=ms.map(m=>{
   const live=!m.done&&m.state&&!/scheduled/i.test(m.state);
   const row=p=>'<div class="row'+(p.w?" w":"")+'"><span class="p">'+(sideFollowed(p)?'<span class="starmark">⭐ </span>':"")+(p.w?"🏆 ":"")+esc(p.n)+(p.c?' <span class="cc">'+esc(p.c)+"</span>":"")+'</span><span class="sets">'+p.s.join(" ")+"</span></div>";
-  return '<div class="match'+(live?" live":"")+'"><div class="who">'+row(m.a)+row(m.b)+'</div><div class="st">'+(m._draw?esc(m._draw)+" · ":"")+esc(m.round&&m._draw?m.round:(m.done?"Completed":m.state||"Scheduled"))+(m.date?"<br>"+new Date(m.date).toLocaleDateString(undefined,{month:"short",day:"numeric"}):"")+"</div></div>";
+  return '<div class="match'+(live?" live":"")+'"><div class="who">'+row(m.a)+row(m.b)+'</div><div class="st">'+(m._draw?esc(m._draw)+" · ":"")+esc(m.round&&m._draw?m.round:(m.done?"Completed":m.state||"Scheduled"))+(m.date?"<br>"+new Date(m.date).toLocaleDateString(undefined,{month:"short",day:"numeric"}):"")+(m.done&&HL[m.id]?'<br><a class="hlnk" href="https://www.youtube.com/watch?v='+esc(HL[m.id].yt)+'" target="_blank" rel="noopener">▶ Highlights</a>':"")+"</div></div>";
  }).join("")||'<p class="note">'+(follOnly?"None of your followed players/countries are in this Slam — add more above.":"No matches in this round yet.")+"</p>";
 }
 /* Catch-up brief: "haven't followed? here's where we are" — generated purely from the data */
@@ -320,6 +321,7 @@ async function boot(){
  renderCount();renderSlams();renderHL();renderMine();
  let champs=[];
  try{const r=await fetch("champions.json?t="+Date.now(),{cache:"no-store"});if(r.ok)champs=(await r.json()).champions||[];}catch(e){}
+ try{const r=await fetch("highlights.json?t="+Date.now(),{cache:"no-store"});if(r.ok)HL=(await r.json()).highlights||{};}catch(e){}
  try{
   const r=await fetch("data.json?t="+Date.now(),{cache:"no-store"});
   if(r.ok){DATA=await r.json();

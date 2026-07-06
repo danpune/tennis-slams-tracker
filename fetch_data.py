@@ -53,7 +53,8 @@ def fetch_tour(tour):
                 comps = [competitor(x) for x in c.get("competitors", [])]
                 if len(comps) != 2:
                     continue
-                matches.append({"round": (c.get("round") or {}).get("displayName", ""),
+                matches.append({"id": str(c.get("id", "")),
+                                "round": (c.get("round") or {}).get("displayName", ""),
                                 "date": c.get("date", ""), "done": bool(st.get("completed")),
                                 "state": st.get("description", ""), "a": comps[0], "b": comps[1]})
             draws.append({"draw": gname, "matches": matches})

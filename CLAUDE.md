@@ -9,10 +9,18 @@ Separate project from `~/worldcup2026` (same playbook, deliberately independent)
   (multi-year `eds` list, auto-rollover, "dates TBA" fallback) → Catch-up brief →
   live-Slam results (5 draws × round chips + ⭐ Following filter) → follow box →
   roll of honour → top-10 → highlights links.
-- `fetch_data.py` → `data.json` (current Slam, all draws, per-set scores, countries;
-  top-10 ATP/WTA) and append-only `champions.json` (evergreen roll of honour — the
-  feed only carries current events, this file is the site's permanent memory;
-  2023–2025 singles seeded from public record).
+- `fetch_data.py` → `data.json` (current Slam, all draws, per-set scores, countries,
+  ESPN match `id`s; top-10 ATP/WTA) and append-only `champions.json` (evergreen roll
+  of honour — the feed only carries current events, this file is the site's permanent
+  memory; 2023–2025 singles seeded from public record).
+- `build_highlights.py` → `highlights.json` (ESPN match id → {yt}, singles only).
+  Scrapes the Slam's official channel /videos page (ytInitialData → lockupViewModel),
+  matches titles by both players' last names + "Highlights" (short-form preferred over
+  "Extended"), verifies EVERY id via YouTube oEmbed: `author_url` must equal the
+  official channel URL (author_name is spoofable — learned on worldcup2026).
+  Merge-only, fail-safe; runs in CI after the fetch with `|| true` (ok if YouTube
+  blocks runners — entries can also be filled by hand). Official handles verified:
+  @AustralianOpen · @RolandGarros · @Wimbledon · @usopen.
 - `.github/workflows/update-data.yml` — every 30 min, SHA-pinned, rebase-before-push,
   fail-safe (never overwrites good data with an empty fetch).
 
@@ -36,10 +44,6 @@ ESPN: `https://site.api.espn.com/apis/site/v2/sports/tennis/{atp|wta}/{scoreboar
   (AO ausopen.com · RG rolandgarros.com · W wimbledon.com/en_GB/atoz/dates.html · USO usopen.org).
 
 ## Roadmap
-1. **US Open (main draw Aug 30, 2026)** — per-match official highlights: `highlights.json`
-   mapping match → YouTube id, verified via oEmbed (author must be the official channel,
-   title/score must match) — port the pattern from `~/worldcup2026/build_squads.py` era
-   fill tool. Singles only realistically; doubles rarely get official highlights.
-2. Draw bracket view (QF onward) — the worldcup2026 bracket tree is a good starting point.
-3. Order-of-play "today" view during Slams (tennis has no fixed kickoff times).
-4. Extend `SLAMS[].eds` with 2028 dates when announced.
+1. Draw bracket view (QF onward) — the worldcup2026 bracket tree is a good starting point.
+2. Order-of-play "today" view during Slams (tennis has no fixed kickoff times).
+3. Extend `SLAMS[].eds` with 2028 dates when announced.
