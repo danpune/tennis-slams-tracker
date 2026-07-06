@@ -2,7 +2,9 @@ name: Update Grand Slam data
 
 on:
   schedule:
-    - cron: "*/30 * * * *"   # every 30 min (UTC); cheap no-op between Slams
+    - cron: "7,37 * * * *"   # every 30 min at :07/:37 — odd minutes dodge GitHub's
+                             # congested :00/:30 scheduler slots, where low-traffic
+                             # repos' crons get skipped (observed: fired once in 3h)
   workflow_dispatch:           # run on demand from the Actions tab
 
 permissions:
