@@ -5,10 +5,14 @@ Separate project from `~/worldcup2026` (same playbook, deliberately independent)
 
 ## Architecture
 - `index.html` — the entire site, self-contained (inline CSS + vanilla JS, system fonts,
-  no dependencies, no cookies/tracking/keys). Sections: countdown → four-majors cards
-  (multi-year `eds` list, auto-rollover, "dates TBA" fallback) → Catch-up brief →
-  live-Slam results (5 draws × round chips + ⭐ Following filter) → follow box →
-  roll of honour → top-10 → highlights links.
+  no dependencies, no cookies/tracking/keys; player headshots hot-linked from
+  `a.espncdn.com/i/headshots/tennis/players/full/<id>.png`, click any photo for a
+  lightbox, click any player NAME for their path-through-the-Slam panel).
+  Sections: countdown → four-majors cards (multi-year `eds` list, auto-rollover,
+  "dates TBA" fallback) → Catch-up brief → live-Slam results (5 draws × round chips
+  + ⭐ Following filter, ▶ Highlights links from highlights.json) → follow box →
+  roll of honour → top-10 (singles only — ESPN's feed has NO doubles/mixed
+  rankings, don't invent them) → highlights links.
 - `fetch_data.py` → `data.json` (current Slam, all draws, per-set scores, countries,
   ESPN match `id`s; top-10 ATP/WTA) and append-only `champions.json` (evergreen roll
   of honour — the feed only carries current events, this file is the site's permanent

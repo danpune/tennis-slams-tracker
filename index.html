@@ -72,7 +72,10 @@ h2 b{color:var(--acc)}
 .my{background:#2a2f14;border:1px solid #4c521f;color:var(--acc);border-radius:999px;padding:5px 12px;font-size:13px;cursor:pointer}
 .my.ctry{background:#152a2f;border-color:#1f4c52;color:#7fd3e0}
 .starmark{color:var(--star)}
-.av{width:28px;height:28px;border-radius:50%;vertical-align:middle;margin-right:7px;background:#0b100d;object-fit:cover}
+.av{width:34px;height:34px;border-radius:50%;vertical-align:middle;margin-right:8px;background:#0b100d;object-fit:cover;cursor:zoom-in}
+.lb{position:fixed;inset:0;background:rgba(5,10,7,.82);display:flex;flex-direction:column;gap:12px;align-items:center;justify-content:center;z-index:50;cursor:zoom-out}
+.lb img{width:min(340px,78vw);aspect-ratio:1;object-fit:cover;border-radius:18px;background:var(--card);border:1px solid var(--line)}
+.lb .lbn{font-size:17px;font-weight:800}
 .wtick{color:var(--acc);font-weight:800}
 .pn{cursor:pointer}.pn:hover{color:var(--acc);text-decoration:underline}
 .path{background:var(--card);border:1px solid var(--line);border-left:4px solid var(--star);border-radius:12px;padding:12px 16px;margin-bottom:10px}
@@ -83,13 +86,13 @@ h2 b{color:var(--acc)}
 .path .pr b{min-width:110px;color:var(--muted);font-weight:700;font-size:12.5px}
 .path .pr .wl{min-width:18px;font-weight:800}.path .pr .wl.W{color:var(--acc)}.path .pr .wl.L{color:#ff8a78}
 .path .pr .sc{font-variant-numeric:tabular-nums;color:var(--muted);white-space:nowrap}
-.rohc .who .av{width:22px;height:22px;margin-right:5px}
+.rohc .who .av{width:26px;height:26px;margin-right:5px}
 @media (max-width:560px){.path .pr b{flex:0 0 100%;min-width:0}.path .pr{gap:4px 8px}}
 .ranks{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px}
 .rank{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:6px 16px 10px}
 .rank h3{font-size:13px;letter-spacing:.1em;color:var(--acc);margin:10px 0 6px}
 .rank ol{margin:0;padding:0;list-style:none}
-.rank li{display:flex;gap:10px;padding:6px 0;border-top:1px solid var(--line);font-size:14px;align-items:baseline}
+.rank li{display:flex;gap:10px;padding:6px 0;border-top:1px solid var(--line);font-size:14.5px;align-items:center}
 .rank li b{min-width:26px;color:var(--muted);font-weight:700;font-variant-numeric:tabular-nums}
 .rank li span{flex:1}
 .rank li .cc{color:var(--muted);font-size:11.5px}
@@ -231,6 +234,7 @@ document.addEventListener("click",e=>{
  const ac=e.target.closest("[data-addc]");if(ac){FOLLOW.c.push(ac.dataset.addc);saveF();renderMine();renderSugg(document.getElementById("fsearch").value);renderMatches();renderRanks();return;}
  const up=e.target.closest("[data-unp]");if(up){FOLLOW.p=FOLLOW.p.filter(x=>x!==up.dataset.unp);saveF();renderMine();renderMatches();renderRanks();return;}
  const uc=e.target.closest("[data-unc]");if(uc){FOLLOW.c=FOLLOW.c.filter(x=>x!==uc.dataset.unc);saveF();renderMine();renderMatches();renderRanks();return;}
+ const im=e.target.closest("img.av");if(im){showLB(im);return;}
  const pp=e.target.closest("[data-pp]");if(pp){showPath(pp.dataset.pp);return;}
  const px=e.target.closest("[data-ppx]");if(px){document.getElementById("path").innerHTML="";return;}
  const d=e.target.closest("[data-d]");if(d){curDraw=+d.dataset.d;curRound=null;renderMatches();return;}
@@ -243,7 +247,13 @@ const roundOrder=["Final","Semifinal","Quarterfinal","Round 4","Round 3","Round 
 function rounds(dr){const rs=[...new Set(dr.matches.map(m=>m.round).filter(Boolean))];
  return rs.sort((a,b)=>{const ia=roundOrder.findIndex(r=>a.startsWith(r)),ib=roundOrder.findIndex(r=>b.startsWith(r));return (ia<0?99:ia)-(ib<0?99:ib);});}
 function sideFollowed(side){if(isF(side))return true;return (side.n||"").split(" / ").some(nm=>FOLLOW.p.includes(nm.trim()));}
-const av=p=>p&&p.i?'<img class="av" loading="lazy" src="https://a.espncdn.com/i/headshots/tennis/players/full/'+p.i+'.png" onerror="this.remove()" alt="">':"";
+const av=p=>p&&p.i?'<img class="av" loading="lazy" src="https://a.espncdn.com/i/headshots/tennis/players/full/'+p.i+'.png" onerror="this.remove()" alt="'+esc(p.n||"")+'" title="'+esc(p.n||"")+'">':"";
+function showLB(im){
+ const d=document.createElement("div");d.className="lb";
+ d.innerHTML='<img src="'+esc(im.src)+'" alt="">'+(im.alt?'<div class="lbn">'+esc(im.alt)+"</div>":"");
+ d.addEventListener("click",()=>d.remove());
+ document.body.appendChild(d);
+}
 const hlnk=m=>m.done&&HL[m.id]?' <a class="hlnk" href="https://www.youtube.com/watch?v='+esc(HL[m.id].yt)+'" target="_blank" rel="noopener">▶ Highlights</a>':"";
 function showPath(name){
  const el=document.getElementById("path"),slam=DATA?.slams[0];
@@ -338,7 +348,7 @@ function renderRoH(champs){
   const yrs=Object.keys(byYear).sort((a,b)=>b-a).slice(0,4).map(y=>{
    const lines=byYear[y].map(c=>{
     const drawTag=/Men's Singles|Women's Singles/.test(c.draw)?(c.draw.startsWith("Men")?"M":"W"):esc(c.draw);
-    return '<span class="who">'+drawTag+" · "+av({i:PIDX[c.champion]})+"🏆 <b>"+esc(c.champion)+"</b>"+(c.champC?' <i>'+esc(c.champC)+"</i>":"")+' <i>d. '+esc(c.runnerUp)+"</i></span>";
+    return '<span class="who">'+drawTag+" · "+av({i:PIDX[c.champion],n:c.champion})+"🏆 <b>"+esc(c.champion)+"</b>"+(c.champC?' <i>'+esc(c.champC)+"</i>":"")+' <i>d. '+esc(c.runnerUp)+"</i></span>";
    }).join("");
    return '<div class="yr"><b>'+y+"</b> "+lines+"</div>";
   }).join("");
@@ -348,7 +358,7 @@ function renderRoH(champs){
 function renderRanks(){
  const R=DATA?.rankings||{};
  document.getElementById("ranks").innerHTML=["atp","wta"].map(t=>{
-  const rows=(R[t]||[]).map(x=>"<li><b>"+x.rank+"</b><span>"+(isF({n:x.name,c:x.c})?'<span class="starmark">⭐ </span>':"")+esc(x.name)+' <span class="cc">'+esc(x.c||"")+"</span></span><i>"+x.points.toLocaleString()+" pts</i></li>").join("");
+  const rows=(R[t]||[]).map(x=>"<li><b>"+x.rank+"</b><span>"+av({i:x.i,n:x.name})+(isF({n:x.name,c:x.c})?'<span class="starmark">⭐ </span>':"")+esc(x.name)+' <span class="cc">'+esc(x.c||"")+"</span></span><i>"+x.points.toLocaleString()+" pts</i></li>").join("");
   return '<div class="rank"><h3>'+t.toUpperCase()+" TOP 10</h3><ol>"+rows+"</ol></div>";
  }).join("");
 }
