@@ -82,6 +82,9 @@ h2 b{color:var(--acc)}
 .lb img{width:min(340px,78vw);aspect-ratio:1;object-fit:cover;border-radius:18px;background:var(--card);border:1px solid var(--line)}
 .lb .lbn{font-size:17px;font-weight:800}
 .wtick{color:var(--acc);font-weight:800}
+.prob{color:var(--muted);font-size:12px;font-weight:700;font-variant-numeric:tabular-nums}
+.prob b{color:var(--acc)}
+.dayhead{margin:20px 0 8px;font-size:13px;letter-spacing:.12em;text-transform:uppercase;color:var(--acc);border-bottom:1px solid var(--line);padding-bottom:4px}
 .rk{color:var(--muted);font-size:11px;border:1px solid var(--line);border-radius:5px;padding:0 4px;font-variant-numeric:tabular-nums;white-space:nowrap}
 .pn{cursor:pointer}.pn:hover{color:var(--acc);text-decoration:underline}
 .path{background:var(--card);border:1px solid var(--line);border-left:4px solid var(--star);border-radius:12px;padding:12px 16px;margin-bottom:10px}
@@ -169,6 +172,10 @@ a{color:#256b46}
   <p>Scores, schedules and rankings are factual sports results, read from ESPN's public feed.
   Nothing is hosted or re-uploaded here: ▶ Highlights links go to the tournaments' own
   official YouTube channels, and player photos load straight from ESPN's public image server.</p>
+  <p>Win percentages shown on upcoming matches are market prices from Polymarket, fetched
+  server-side and shown for information only — they are predictions by market participants,
+  not facts, not endorsements and <b>not betting advice</b>. This site is not affiliated
+  with Polymarket.</p>
   <p><b>Privacy:</b> no cookies, no analytics, no ads, no accounts, no tracking of any kind.
   Your ⭐ follows and timezone choice are stored only in your own browser and never leave it.
   The only external requests your browser makes are for those player photos.</p>
@@ -177,7 +184,7 @@ a{color:#256b46}
   target="_blank" rel="noopener">GitHub repository</a> — it will be addressed promptly.</p>
  </div>
 
- <footer>Built to follow the Slams — an independent fan project · results &amp; rankings via ESPN's public feed · schedules per the official tournaments · not affiliated with the ATP, WTA, ITF or any tournament · no cookies, no tracking, no ads · your follows stay in your browser</footer>
+ <footer>Built to follow the Slams — an independent fan project · results &amp; rankings via ESPN's public feed · schedules per the official tournaments · not affiliated with the ATP, WTA, ITF or any tournament · no cookies, no tracking, no ads · your follows stay in your browser · win % on upcoming matches are Polymarket market prices — informational only, not betting advice</footer>
 </div>
 <script>
 "use strict";
@@ -266,7 +273,7 @@ document.addEventListener("click",e=>{
  const im=e.target.closest("img.av");if(im){showLB(im);return;}
  const pp=e.target.closest("[data-pp]");if(pp){showPath(pp.dataset.pp);return;}
  const px=e.target.closest("[data-ppx]");if(px){document.getElementById("path").innerHTML="";return;}
- const d=e.target.closest("[data-d]");if(d){curDraw=+d.dataset.d;curRound=null;renderMatches();return;}
+ const d=e.target.closest("[data-d]");if(d){curDraw=d.dataset.d==="all"?"all":+d.dataset.d;curRound=null;renderMatches();return;}
  const r=e.target.closest("[data-r]");if(r){curRound=r.dataset.r;renderMatches();return;}
  const f=e.target.closest("#folltog");if(f){follOnly=!follOnly;renderMatches();}
 });
@@ -328,21 +335,28 @@ function showPath(name){
 }
 function renderMatches(){
  if(!DATA||!DATA.slams.length)return;
- const slam=DATA.slams[0],dr=slam.draws[curDraw],rs=rounds(dr);
- if(curRound==null||!rs.includes(curRound)){curRound=rs.find(r=>dr.matches.some(m=>m.round===r&&(m.done||m.a.n!=="TBD")))||rs[0]||null;}
+ const slam=DATA.slams[0],isAll=curDraw==="all",dr=isAll?null:slam.draws[curDraw],rs=isAll?[]:rounds(dr);
+ if(!isAll&&(curRound==null||!rs.includes(curRound))){curRound=rs.find(r=>dr.matches.some(m=>m.round===r&&(m.done||m.a.n!=="TBD")))||rs[0]||null;}
  document.getElementById("drawchips").innerHTML=slam.draws.map((d,i)=>'<button class="chip'+(i===curDraw?" on":"")+'" data-d="'+i+'">'+esc(d.draw)+"</button>").join("")
+  +'<button class="chip'+(curDraw==="all"?" on":"")+'" data-d="all">📋 All days</button>'
   +'<button class="chip star'+(follOnly?" on":"")+'" id="folltog">⭐ Following</button>';
  document.getElementById("roundchips").innerHTML=rs.map(r=>'<button class="chip'+(r===curRound?" on":"")+'" data-r="'+esc(r)+'">'+esc(r)+"</button>").join("");
  let ms;
  if(follOnly){ms=slam.draws.flatMap(d2=>d2.matches.filter(m=>sideFollowed(m.a)||sideFollowed(m.b)).map(m=>({...m,_draw:d2.draw})));
   document.getElementById("roundchips").innerHTML='<p class="note">Showing every match involving your ⭐ players/countries, across all draws.</p>';}
+ else if(isAll){ms=slam.draws.flatMap(d2=>d2.matches.filter(m=>m.date).map(m=>({...m,_draw:d2.draw}))).sort((x,y)=>Date.parse(x.date)-Date.parse(y.date));
+  document.getElementById("roundchips").innerHTML='<p class="note">The whole tournament, day by day — every draw, every round, in your selected timezone.</p>';}
  else ms=dr.matches.filter(m=>m.round===curRound);
+ let lastDay="";
  document.getElementById("matches").innerHTML=ms.map(m=>{
   const live=!m.done&&m.state&&!/scheduled/i.test(m.state);
-  const row=p=>'<div class="row'+(p.w?" w":"")+'"><span class="p">'+av(p)+(sideFollowed(p)?'<span class="starmark">⭐ </span>':"")+(p.w?'<span class="wtick">✓</span> ':"")+(p.r?'<span class="rk">#'+p.r+"</span> ":"")+'<span class="pn" data-pp="'+esc(p.n)+'">'+esc(p.n)+"</span>"+(p.c?' <span class="cc">'+esc(p.c)+"</span>":"")+'</span><span class="sets">'+p.s.join(" ")+"</span></div>";
+  let head="";
+  if(isAll){const day=new Date(m.date).toLocaleDateString(undefined,{weekday:"long",month:"short",day:"numeric",timeZone:effTz()});
+   if(day!==lastDay){lastDay=day;head='<div class="dayhead">'+esc(day)+"</div>";}}
+  const row=(p,prob)=>'<div class="row'+(p.w?" w":"")+'"><span class="p">'+av(p)+(sideFollowed(p)?'<span class="starmark">⭐ </span>':"")+(p.w?'<span class="wtick">✓</span> ':"")+(p.r?'<span class="rk">#'+p.r+"</span> ":"")+'<span class="pn" data-pp="'+esc(p.n)+'">'+esc(p.n)+"</span>"+(p.c?' <span class="cc">'+esc(p.c)+"</span>":"")+'</span>'+(p.s.length?'<span class="sets">'+p.s.join(" ")+"</span>":(prob!=null?'<span class="prob" title="Polymarket market price — informational, not betting advice">'+(prob>=.5?"<b>":"")+Math.round(prob*100)+"%"+(prob>=.5?"</b>":"")+"</span>":""))+"</div>";
   const when=m.date?(m.done?new Date(m.date).toLocaleDateString(undefined,{month:"short",day:"numeric"}):fmtWhen(m.date)):"";
   const cal=(!m.done&&!live&&m.date&&m.a.n!=="TBD")?'<br><a class="mcal" target="_blank" rel="noopener" href="'+gcalM(m,slam)+'">📅 Gcal</a> <a class="mcal" href="'+icsM(m,slam)+'" download="match.ics">iCal</a>':"";
-  return '<div class="match'+(live?" live":"")+'"><div class="who">'+row(m.a)+row(m.b)+'</div><div class="st">'+(m._draw?esc(m._draw)+" · ":"")+esc(m.round&&m._draw?m.round:(m.done?"Completed":m.state||"Scheduled"))+(when?"<br>"+when:"")+cal+(m.done&&HL[m.id]?"<br>"+hlnk(m):"")+"</div></div>";
+  return head+'<div class="match'+(live?" live":"")+'"><div class="who">'+row(m.a,!m.done&&m.o?m.o[0]:null)+row(m.b,!m.done&&m.o?m.o[1]:null)+'</div><div class="st">'+(m._draw?esc(m._draw)+" · ":"")+esc(m.round&&m._draw?m.round:(m.done?"Completed":m.state||"Scheduled"))+(when?"<br>"+when:"")+cal+(m.done&&HL[m.id]?"<br>"+hlnk(m):"")+"</div></div>";
  }).join("")||'<p class="note">'+(follOnly?"None of your followed players/countries are in this Slam — add more above.":"No matches in this round yet.")+"</p>";
 }
 /* Catch-up brief: "haven't followed? here's where we are" — generated purely from the data */

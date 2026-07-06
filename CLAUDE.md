@@ -17,7 +17,13 @@ World Cup one is dark; keep it that way).
   rankings, don't invent them) → highlights links.
 - `fetch_data.py` → `data.json` (current Slam, all draws, per-set scores, countries,
   ESPN match `id`s + athlete `i`ds + world ranking `r` per singles side (rankings feed
-  is ~150 deep, stamped onto draw players by athlete id); top-10 ATP/WTA) and append-only `champions.json` (evergreen roll
+  is ~150 deep, stamped onto draw players by athlete id); top-10 ATP/WTA). Also
+  stamps `o` = [P(a),P(b)] match-winner prices from Polymarket's public gamma API
+  (tag_slug=tennis; the winner market is the one whose question == event title —
+  events also carry handicap/set side markets; matched to our matches by surname(s)
+  per side, ambiguous ⇒ skipped; fail-safe). Shown as % on upcoming matches with a
+  not-betting-advice disclaimer. NO head-to-head data exists in any of our free
+  sources (ESPN summary endpoint 404s for tennis) — don't fabricate one and append-only `champions.json` (evergreen roll
   of honour — the feed only carries current events, this file is the site's permanent
   memory; 2023–2025 singles seeded from public record).
 - `build_highlights.py` → `highlights.json` (ESPN match id → {yt}, singles only).

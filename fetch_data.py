@@ -84,6 +84,56 @@ def fetch_rankings(tour):
                     "points": int(float(x.get("points", 0)))})
     return out
 
+def norm_name(s):
+    import unicodedata
+    s = unicodedata.normalize("NFKD", s)
+    return "".join(c for c in s if not unicodedata.combining(c)).lower().replace("-", " ")
+
+def fetch_odds(slams):
+    """Polymarket match-winner prices for upcoming matches (informational only).
+    Matches a market to a match when each outcome contains one side's surname(s);
+    stores m["o"] = [P(side a), P(side b)]. Fail-safe: any error leaves data as-is."""
+    events = []
+    for off in range(0, 500, 100):
+        batch = get("https://gamma-api.polymarket.com/events"
+                    f"?tag_slug=tennis&closed=false&limit=100&offset={off}")
+        if not batch:
+            break
+        events += batch
+    marks = []
+    for e in events:
+        for mk in e.get("markets") or []:
+            # events carry side markets too (handicaps, 1st set...); the match-winner
+            # market is the one whose question is the event title itself
+            if mk.get("question") != e.get("title"):
+                continue
+            try:
+                outs = json.loads(mk.get("outcomes") or "[]")
+                prices = [float(p) for p in json.loads(mk.get("outcomePrices") or "[]")]
+            except Exception:
+                continue
+            if len(outs) == 2 and len(prices) == 2 and not mk.get("closed"):
+                marks.append(([norm_name(o) for o in outs], prices))
+    def side_hits(side, outcome):  # every surname of the side ("A / B" for doubles) in outcome
+        return all(norm_name(p.strip()).split()[-1] in outcome
+                   for p in side["n"].split(" / ") if p.strip())
+    tagged = 0
+    for s in slams:
+        for dr in s["draws"]:
+            for m in dr["matches"]:
+                if m["done"] or m["a"]["n"] == "TBD" or m["b"]["n"] == "TBD":
+                    continue
+                hits = []
+                for outs, prices in marks:
+                    if side_hits(m["a"], outs[0]) and side_hits(m["b"], outs[1]):
+                        hits.append(prices)
+                    elif side_hits(m["a"], outs[1]) and side_hits(m["b"], outs[0]):
+                        hits.append(prices[::-1])
+                if len(hits) == 1 and 0 < hits[0][0] < 1:  # unambiguous, non-degenerate
+                    m["o"] = [round(hits[0][0], 3), round(hits[0][1], 3)]
+                    tagged += 1
+    return tagged
+
 def update_champions(slams):
     """Merge completed finals into champions.json — append-only, keyed year|slam|draw."""
     path = "champions.json"
@@ -141,11 +191,16 @@ def main():
     if not out["rankings"].get("atp") and not out["slams"]:
         print("Empty result; leaving existing files untouched.", file=sys.stderr)
         sys.exit(0)
+    try:
+        odds = fetch_odds(out["slams"])
+    except Exception as e:
+        odds = 0
+        print(f"Odds fetch failed ({e}); continuing without.", file=sys.stderr)
     with open("data.json", "w", encoding="utf-8") as f:
         json.dump(out, f, ensure_ascii=False, separators=(",", ":"))
     added = update_champions(out["slams"])
     nm = sum(len(dr["matches"]) for s in out["slams"] for dr in s["draws"])
-    print(f"Wrote data.json ({len(out['slams'])} slam(s), {nm} matches) · "
+    print(f"Wrote data.json ({len(out['slams'])} slam(s), {nm} matches, {odds} with odds) · "
           f"champions.json +{added} new")
 
 if __name__ == "__main__":
