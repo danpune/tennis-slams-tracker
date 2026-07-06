@@ -31,3 +31,8 @@ Slams it's a countdown, the season calendar, and the current top 10.
   as the World Cup project's `highlights.json`)
 - Follow-a-player stars
 - Draw bracket view (QF onward)
+
+## License
+
+Code is [MIT-licensed](LICENSE). Match data comes from the public sources
+credited above and stays subject to their terms.
