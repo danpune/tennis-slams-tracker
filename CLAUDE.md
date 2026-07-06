@@ -1,7 +1,9 @@
 # Tennis Grand Slam Tracker — project notes
 
 LIVE: https://danpune.github.io/tennis-slams-tracker/ · repo `danpune/tennis-slams-tracker`
-Separate project from `~/worldcup2026` (same playbook, deliberately independent).
+Separate project from `~/worldcup2026` (same playbook, deliberately independent —
+including visually: this site is LIGHT (white cards / Wimbledon green `--acc`), the
+World Cup one is dark; keep it that way).
 
 ## Architecture
 - `index.html` — the entire site, self-contained (inline CSS + vanilla JS, system fonts,
@@ -14,7 +16,8 @@ Separate project from `~/worldcup2026` (same playbook, deliberately independent)
   roll of honour → top-10 (singles only — ESPN's feed has NO doubles/mixed
   rankings, don't invent them) → highlights links.
 - `fetch_data.py` → `data.json` (current Slam, all draws, per-set scores, countries,
-  ESPN match `id`s; top-10 ATP/WTA) and append-only `champions.json` (evergreen roll
+  ESPN match `id`s + athlete `i`ds + world ranking `r` per singles side (rankings feed
+  is ~150 deep, stamped onto draw players by athlete id); top-10 ATP/WTA) and append-only `champions.json` (evergreen roll
   of honour — the feed only carries current events, this file is the site's permanent
   memory; 2023–2025 singles seeded from public record).
 - `build_highlights.py` → `highlights.json` (ESPN match id → {yt}, singles only).

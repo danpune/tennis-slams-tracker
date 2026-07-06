@@ -6,7 +6,7 @@
 <title>Tennis Grand Slam Tracker — Schedule, Results & Champions</title>
 <meta name="description" content="All four tennis Grand Slams, every year — dates, countdown, results for every draw, champions history, top-10 rankings, follow your players and countries. No ads, no tracking.">
 <style>
-:root{--bg:#0e1512;--card:#17211b;--line:#26332b;--text:#e8ede9;--muted:#93a29a;--acc:#d9e021;--live:#e0552f;--star:#f4c542}
+:root{--bg:#f4f6f1;--card:#ffffff;--line:#dce3d6;--text:#1b2a20;--muted:#5d6e62;--acc:#1f7a33;--live:#c43d17;--star:#a97b0a}
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--text);font:16px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
 .wrap{max-width:1160px;margin:0 auto;padding:0 16px}
@@ -26,20 +26,20 @@ h2 b{color:var(--acc)}
 .slam .meta{font-size:12.5px;color:var(--muted)}
 .slam .dates{font-size:13.5px}
 .badge{display:inline-block;font-size:10.5px;letter-spacing:.08em;font-weight:700;border-radius:5px;padding:2px 7px;text-transform:uppercase}
-.b-live{background:#3a1f1b;color:#ff8a78}.b-next{background:#32391a;color:var(--acc)}.b-soon{background:#223028;color:#9fc3ab}.b-tba{background:#223028;color:var(--muted)}
+.b-live{background:#fbe7e0;color:#b23414}.b-next{background:#e3efdd;color:var(--acc)}.b-soon{background:#e8f0ea;color:#3d6b4d}.b-tba{background:#edf1ec;color:var(--muted)}
 .cal{display:inline-block;font-size:12px;border:1px solid var(--line);border-radius:8px;padding:5px 10px;color:var(--text);text-decoration:none;margin-right:6px;margin-top:4px}
 .cal:hover{border-color:var(--acc)}
 .chips{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0 14px}
 .chip{border:1px solid var(--line);background:none;color:var(--text);border-radius:999px;padding:7px 14px;font-size:13px;cursor:pointer}
-.chip.on{background:var(--acc);color:#111;border-color:var(--acc);font-weight:700}
-.chip.star{border-color:#5a4d20}
-.chip.star.on{background:var(--star);border-color:var(--star)}
+.chip.on{background:var(--acc);color:#fff;border-color:var(--acc);font-weight:700}
+.chip.star{border-color:#d8c88f}
+.chip.star.on{background:var(--star);border-color:var(--star);color:#fff}
 .match{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:10px 14px;margin-bottom:8px;display:flex;gap:12px;align-items:center}
 .match .who{flex:1;min-width:0}
 .row{display:flex;justify-content:space-between;gap:10px;font-size:15px;padding:3px 0;align-items:center}
 .row .p{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .row .cc{color:var(--muted);font-size:11.5px}
-.row.w .p{font-weight:700;color:#fff}
+.row.w .p{font-weight:700;color:#0d1f14}
 .row .sets{font-variant-numeric:tabular-nums;color:var(--muted);white-space:nowrap}
 .row.w .sets{color:var(--acc)}
 .match .st{font-size:11px;color:var(--muted);text-align:right;flex:0 0 auto}
@@ -49,7 +49,7 @@ h2 b{color:var(--acc)}
 .brief .bt{font-weight:800;font-size:15px;margin-bottom:8px}
 .brief .bl{font-size:13.5px;padding:3px 0;color:var(--text)}
 .brief .bl b{color:var(--acc)}
-.brief .alert{color:#ff8a78;font-weight:700}
+.brief .alert{color:#b23414;font-weight:700}
 .brief .dim{color:var(--muted)}
 .tzrow{font-size:12.5px;color:var(--muted);margin:-4px 0 12px}
 .tzrow select{background:var(--card);border:1px solid var(--line);border-radius:8px;color:var(--text);font-size:12.5px;padding:4px 8px}
@@ -74,14 +74,15 @@ h2 b{color:var(--acc)}
 .sugg button{display:flex;justify-content:space-between;width:100%;text-align:left;background:none;border:0;border-top:1px solid var(--line);color:var(--text);font-size:14px;padding:8px 4px;cursor:pointer}
 .sugg button:hover{color:var(--acc)}
 .mychips{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
-.my{background:#2a2f14;border:1px solid #4c521f;color:var(--acc);border-radius:999px;padding:5px 12px;font-size:13px;cursor:pointer}
-.my.ctry{background:#152a2f;border-color:#1f4c52;color:#7fd3e0}
+.my{background:#e9f2e2;border:1px solid #c4d6b8;color:var(--acc);border-radius:999px;padding:5px 12px;font-size:13px;cursor:pointer}
+.my.ctry{background:#e2f0f3;border-color:#b7d6dc;color:#186273}
 .starmark{color:var(--star)}
-.av{width:34px;height:34px;border-radius:50%;vertical-align:middle;margin-right:8px;background:#0b100d;object-fit:cover;cursor:zoom-in}
-.lb{position:fixed;inset:0;background:rgba(5,10,7,.82);display:flex;flex-direction:column;gap:12px;align-items:center;justify-content:center;z-index:50;cursor:zoom-out}
+.av{width:34px;height:34px;border-radius:50%;vertical-align:middle;margin-right:8px;background:#e7ece4;object-fit:cover;cursor:zoom-in}
+.lb{position:fixed;inset:0;color:#fff;background:rgba(10,18,13,.85);display:flex;flex-direction:column;gap:12px;align-items:center;justify-content:center;z-index:50;cursor:zoom-out}
 .lb img{width:min(340px,78vw);aspect-ratio:1;object-fit:cover;border-radius:18px;background:var(--card);border:1px solid var(--line)}
 .lb .lbn{font-size:17px;font-weight:800}
 .wtick{color:var(--acc);font-weight:800}
+.rk{color:var(--muted);font-size:11px;border:1px solid var(--line);border-radius:5px;padding:0 4px;font-variant-numeric:tabular-nums;white-space:nowrap}
 .pn{cursor:pointer}.pn:hover{color:var(--acc);text-decoration:underline}
 .path{background:var(--card);border:1px solid var(--line);border-left:4px solid var(--star);border-radius:12px;padding:12px 16px;margin-bottom:10px}
 .path .pt{font-weight:800;font-size:15px;display:flex;justify-content:space-between;gap:10px;margin-bottom:6px}
@@ -89,7 +90,7 @@ h2 b{color:var(--acc)}
 .path .pr{display:flex;gap:6px 10px;align-items:baseline;flex-wrap:wrap;border-top:1px solid var(--line);padding:6px 0;font-size:14px}
 .path .pr .op{flex:1;min-width:0}
 .path .pr b{min-width:110px;color:var(--muted);font-weight:700;font-size:12.5px}
-.path .pr .wl{min-width:18px;font-weight:800}.path .pr .wl.W{color:var(--acc)}.path .pr .wl.L{color:#ff8a78}
+.path .pr .wl{min-width:18px;font-weight:800}.path .pr .wl.W{color:var(--acc)}.path .pr .wl.L{color:#b23414}
 .path .pr .sc{font-variant-numeric:tabular-nums;color:var(--muted);white-space:nowrap}
 .rohc .who .av{width:26px;height:26px;margin-right:5px}
 @media (max-width:560px){.path .pr b{flex:0 0 100%;min-width:0}.path .pr{gap:4px 8px}}
@@ -110,7 +111,7 @@ footer{margin:44px 0 26px;padding-top:14px;border-top:1px solid var(--line);colo
 .note{font-size:12px;color:var(--muted)}
 .about{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:6px 18px;font-size:13.5px;color:var(--muted)}
 .about p{margin:11px 0}.about b{color:var(--text)}
-a{color:#9fc3ab}
+a{color:#256b46}
 .hlnk{font-size:11.5px;text-decoration:none;white-space:nowrap}
 </style>
 </head>
@@ -129,7 +130,7 @@ a{color:#9fc3ab}
 
  <section id="livewrap" style="display:none">
   <h2 id="livehead"></h2>
-  <div class="tzrow">🕐 Show match times in <select id="tzsel"><option value="local">your time</option><option value="venue">venue time</option></select> <span class="dim" id="tzname"></span></div>
+  <div class="tzrow">🕐 Show match times in <select id="tzsel"></select> <span class="dim" id="tzname"></span></div>
   <div class="brief" id="brief" style="display:none"></div>
   <div id="champs"></div>
   <div class="chips" id="drawchips"></div>
@@ -270,13 +271,20 @@ document.addEventListener("click",e=>{
  const f=e.target.closest("#folltog");if(f){follOnly=!follOnly;renderMatches();}
 });
 /* ── timezone choice: your local zone vs the venue's ── */
-let TZ=localStorage.getItem("gs_tz")||"local";
+const localTZ=Intl.DateTimeFormat().resolvedOptions().timeZone||"UTC";
+const TZ_OPTS=[["__local__","your time ("+localTZ.split("/").pop().replace(/_/g," ")+")"],["__venue__","venue time"],
+ ["Asia/Kolkata","India (IST)"],["Europe/London","UK"],["Europe/Paris","Central Europe"],
+ ["America/New_York","US Eastern"],["America/Chicago","US Central"],["America/Los_Angeles","US Pacific"],
+ ["Australia/Melbourne","Australia (Melbourne)"],["Asia/Tokyo","Japan"]];
+let TZ=localStorage.getItem("gs_tz")||"__local__";
+if(TZ==="local")TZ="__local__";if(TZ==="venue")TZ="__venue__";               /* migrate old values */
+if(!TZ_OPTS.some(o=>o[0]===TZ))TZ="__local__";
+document.getElementById("tzsel").innerHTML=TZ_OPTS.map(([v,l])=>'<option value="'+v+'">'+esc(l)+"</option>").join("");
 function curSlamTz(){const s=DATA&&DATA.slams[0]&&SLAMS.find(x=>x.name===DATA.slams[0].name);return s?s.tz:undefined;}
-function fmtWhen(iso){if(!iso)return"";const o={month:"short",day:"numeric",hour:"numeric",minute:"2-digit",timeZoneName:"short"};
- if(TZ==="venue"&&curSlamTz())o.timeZone=curSlamTz();
- return new Date(iso).toLocaleString(undefined,o);}
-function tzLabel(){try{const o={timeZoneName:"long"};if(TZ==="venue"&&curSlamTz())o.timeZone=curSlamTz();
- return "· "+new Intl.DateTimeFormat(undefined,o).formatToParts(new Date()).find(p=>p.type==="timeZoneName").value;}catch(e){return"";}}
+function effTz(){return TZ==="__venue__"?(curSlamTz()||localTZ):(TZ==="__local__"?localTZ:TZ);}
+function fmtWhen(iso){if(!iso)return"";
+ return new Date(iso).toLocaleString(undefined,{month:"short",day:"numeric",hour:"numeric",minute:"2-digit",timeZoneName:"short",timeZone:effTz()});}
+function tzLabel(){try{return "· "+new Intl.DateTimeFormat(undefined,{timeZoneName:"long",timeZone:effTz()}).formatToParts(new Date()).find(p=>p.type==="timeZoneName").value;}catch(e){return"";}}
 /* per-match calendar (scheduled matches; tennis has no fixed length — 2h30 estimate) */
 const zstamp=t=>new Date(t).toISOString().replace(/[-:]/g,"").replace(/\.\d{3}/,"");
 function gcalM(m,slam){const t0=Date.parse(m.date),t1=t0+150*60000;
@@ -314,7 +322,7 @@ function showPath(name){
   +rows.map(r=>{
    const sc=r.mine.s.length?r.mine.s.map((v,k)=>v+"-"+(r.opp.s[k]??"")).join("  "):"";
    const wl=r.m.done?(r.mine.w?"W":"L"):"";
-   return '<div class="pr"><b>'+esc(r.dr.replace(/^(Men's|Women's|Mixed) /,""))+" "+esc(r.m.round)+'</b><span class="wl '+wl+'">'+(wl||"·")+'</span><span class="op">vs '+av(r.opp)+esc(r.opp.n)+(r.opp.c?' <span class="cc">'+esc(r.opp.c)+"</span>":"")+'</span><span class="sc">'+esc(sc||(r.m.done?"":r.m.state||"Scheduled"))+"</span>"+hlnk(r.m)+"</div>";
+   return '<div class="pr"><b>'+esc(r.dr.replace(/^(Men's|Women's|Mixed) /,""))+" "+esc(r.m.round)+'</b><span class="wl '+wl+'">'+(wl||"·")+'</span><span class="op">vs '+av(r.opp)+esc(r.opp.n)+(r.opp.c?' <span class="cc">'+esc(r.opp.c)+"</span>":"")+(r.opp.r?' <span class="rk">#'+r.opp.r+"</span>":"")+'</span><span class="sc">'+esc(sc||(r.m.done?"":r.m.state||"Scheduled"))+"</span>"+hlnk(r.m)+"</div>";
   }).join("")+"</div>";
  el.scrollIntoView({behavior:"smooth",block:"nearest"});
 }
@@ -331,7 +339,7 @@ function renderMatches(){
  else ms=dr.matches.filter(m=>m.round===curRound);
  document.getElementById("matches").innerHTML=ms.map(m=>{
   const live=!m.done&&m.state&&!/scheduled/i.test(m.state);
-  const row=p=>'<div class="row'+(p.w?" w":"")+'"><span class="p">'+av(p)+(sideFollowed(p)?'<span class="starmark">⭐ </span>':"")+(p.w?'<span class="wtick">✓</span> ':"")+'<span class="pn" data-pp="'+esc(p.n)+'">'+esc(p.n)+"</span>"+(p.c?' <span class="cc">'+esc(p.c)+"</span>":"")+'</span><span class="sets">'+p.s.join(" ")+"</span></div>";
+  const row=p=>'<div class="row'+(p.w?" w":"")+'"><span class="p">'+av(p)+(sideFollowed(p)?'<span class="starmark">⭐ </span>':"")+(p.w?'<span class="wtick">✓</span> ':"")+(p.r?'<span class="rk">#'+p.r+"</span> ":"")+'<span class="pn" data-pp="'+esc(p.n)+'">'+esc(p.n)+"</span>"+(p.c?' <span class="cc">'+esc(p.c)+"</span>":"")+'</span><span class="sets">'+p.s.join(" ")+"</span></div>";
   const when=m.date?(m.done?new Date(m.date).toLocaleDateString(undefined,{month:"short",day:"numeric"}):fmtWhen(m.date)):"";
   const cal=(!m.done&&!live&&m.date&&m.a.n!=="TBD")?'<br><a class="mcal" target="_blank" rel="noopener" href="'+gcalM(m,slam)+'">📅 Gcal</a> <a class="mcal" href="'+icsM(m,slam)+'" download="match.ics">iCal</a>':"";
   return '<div class="match'+(live?" live":"")+'"><div class="who">'+row(m.a)+row(m.b)+'</div><div class="st">'+(m._draw?esc(m._draw)+" · ":"")+esc(m.round&&m._draw?m.round:(m.done?"Completed":m.state||"Scheduled"))+(when?"<br>"+when:"")+cal+(m.done&&HL[m.id]?"<br>"+hlnk(m):"")+"</div></div>";

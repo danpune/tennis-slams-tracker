@@ -29,7 +29,7 @@ def country(athlete):
     code = href.rsplit("/", 1)[-1].split(".")[0].upper() if href else ""
     return code, alt
 
-def competitor(x):
+def competitor(x, rankmap):
     a = x.get("athlete") or {}
     r = x.get("roster") or {}
     name = a.get("displayName") or r.get("shortDisplayName") or r.get("displayName") or "?"
@@ -43,9 +43,11 @@ def competitor(x):
         if m:
             out["i"] = m.group(1)
             break
+    if out.get("i") in rankmap:
+        out["r"] = rankmap[out["i"]]   # current ATP/WTA world ranking
     return out
 
-def fetch_tour(tour):
+def fetch_tour(tour, rankmap):
     d = get(f"{BASE}/{tour}/scoreboard")
     events = []
     for e in d.get("events", []):
@@ -57,7 +59,7 @@ def fetch_tour(tour):
             matches = []
             for c in g.get("competitions", []):
                 st = (c.get("status") or {}).get("type") or {}
-                comps = [competitor(x) for x in c.get("competitors", [])]
+                comps = [competitor(x, rankmap) for x in c.get("competitors", [])]
                 if len(comps) != 2:
                     continue
                 matches.append({"id": str(c.get("id", "")),
@@ -71,9 +73,10 @@ def fetch_tour(tour):
     return events
 
 def fetch_rankings(tour):
+    """Full ranking list (~150 deep) — top-10 is displayed, the rest ranks draw players."""
     d = get(f"{BASE}/{tour}/rankings")
     out = []
-    for x in ((d.get("rankings") or [{}])[0].get("ranks") or [])[:10]:
+    for x in (d.get("rankings") or [{}])[0].get("ranks") or []:
         a = x.get("athlete") or {}
         code, cname = country(a)
         out.append({"rank": int(x.get("current", 0)), "name": a.get("displayName", "?"),
@@ -120,15 +123,18 @@ def main():
     out = {"updated": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
            "source": "ESPN (unofficial public feed)", "slams": [], "rankings": {}}
     try:
+        rankmap = {}
+        for tour in ("atp", "wta"):
+            full = fetch_rankings(tour)
+            out["rankings"][tour] = full[:10]
+            rankmap.update({x["i"]: x["rank"] for x in full if x["i"]})
         seen = set()
         for tour in ("atp", "wta"):
-            for ev in fetch_tour(tour):
+            for ev in fetch_tour(tour, rankmap):
                 if ev["name"] in seen:
                     continue
                 seen.add(ev["name"])
                 out["slams"].append(ev)
-        out["rankings"]["atp"] = fetch_rankings("atp")
-        out["rankings"]["wta"] = fetch_rankings("wta")
     except Exception as e:
         print(f"Fetch failed ({e}); leaving existing files untouched.", file=sys.stderr)
         sys.exit(0)
