@@ -201,15 +201,16 @@ a{color:#256b46}
   with Polymarket.</p>
   <p><b>Privacy:</b> no cookies, no analytics, no ads, no accounts, no tracking of any kind.
   Your ⭐ follows and timezone choice are stored only in your own browser and never leave it.
-  The only external requests your browser makes are for player photos (ESPN) and
-  highlight thumbnails (YouTube); a highlight video itself loads — via YouTube's
-  cookie-less embed domain — only when you tap play.</p>
+  The only external requests your browser makes are for player photos (ESPN),
+  highlight thumbnails (YouTube; a video itself loads — via YouTube's cookie-less
+  embed domain — only when you tap play), and one anonymous ping to a public visit
+  counter, which carries no cookies and no identifiers — it just adds 1.</p>
   <p class="note">If you represent a rights holder and have a concern about anything shown
   here, please open an issue on the <a href="https://github.com/danpune/tennis-slams-tracker"
   target="_blank" rel="noopener">GitHub repository</a> — it will be addressed promptly.</p>
  </div>
 
- <footer>Built to follow the Slams — an independent fan project · results &amp; rankings via ESPN's public feed · schedules per the official tournaments · not affiliated with the ATP, WTA, ITF or any tournament · no cookies, no tracking, no ads · your follows stay in your browser · win % on upcoming matches are Polymarket market prices — informational only, not betting advice</footer>
+ <footer>Built to follow the Slams — an independent fan project · results &amp; rankings via ESPN's public feed · schedules per the official tournaments · not affiliated with the ATP, WTA, ITF or any tournament · no cookies, no tracking, no ads · your follows stay in your browser · win % on upcoming matches are Polymarket market prices — informational only, not betting advice<span id="visits"></span></footer>
 </div>
 <script>
 "use strict";
@@ -538,6 +539,8 @@ async function boot(){
  renderRoH(champs);
 }
 boot();
+/* fun footer visit counter (free Abacus API; counts page views; fails silently if the service is down) */
+fetch("https://abacus.jasoncameron.dev/hit/danpune-tennis-slams/visits").then(r=>r.json()).then(d=>{if(d&&d.value!=null)document.getElementById("visits").textContent=" · 👀 "+d.value.toLocaleString()+" visits";}).catch(()=>{});
 </script>
 </body>
 </html>
