@@ -1,4 +1,4 @@
-# 🎾 Grand Slam Tracker
+# 🎾 Tennis Grand Slam Tracker
 
 All four tennis majors in one place — dates, countdown, results for **every draw**
 (men's & women's singles, men's & women's doubles, mixed), world top-10 rankings,

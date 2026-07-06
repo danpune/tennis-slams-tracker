@@ -13,7 +13,7 @@ import json, os, sys, urllib.request
 from datetime import datetime, timezone
 
 BASE = "https://site.api.espn.com/apis/site/v2/sports/tennis"
-UA = {"User-Agent": "grandslams-tracker/1.0 (github.com/danpune/grandslams)"}
+UA = {"User-Agent": "grandslams-tracker/1.0 (github.com/danpune/tennis-slams-tracker)"}
 
 def get(url):
     with urllib.request.urlopen(urllib.request.Request(url, headers=UA), timeout=30) as r:
