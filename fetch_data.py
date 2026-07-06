@@ -9,7 +9,7 @@ Writes:
 Run by GitHub Actions every 30 min. No API key. Standard library only.
 Fail-safe: never overwrites good files on a failed/empty fetch; champions merge-only.
 """
-import json, os, sys, urllib.request
+import json, os, re, sys, urllib.request
 from datetime import datetime, timezone
 
 BASE = "https://site.api.espn.com/apis/site/v2/sports/tennis"
@@ -34,9 +34,16 @@ def competitor(x):
     r = x.get("roster") or {}
     name = a.get("displayName") or r.get("shortDisplayName") or r.get("displayName") or "?"
     code, cname = country(a) if a else ("", "")
-    return {"n": name, "c": code, "cn": cname,
-            "s": [int(s.get("value", 0)) for s in (x.get("linescores") or [])],
-            "w": bool(x.get("winner"))}
+    out = {"n": name, "c": code, "cn": cname,
+           "s": [int(s.get("value", 0)) for s in (x.get("linescores") or [])],
+           "w": bool(x.get("winner"))}
+    # player id (headshots live at a.espncdn.com/i/headshots/tennis/players/full/<id>.png)
+    for l in a.get("links") or []:
+        m = re.search(r"/id/(\d+)/", l.get("href", ""))
+        if m:
+            out["i"] = m.group(1)
+            break
+    return out
 
 def fetch_tour(tour):
     d = get(f"{BASE}/{tour}/scoreboard")
@@ -70,7 +77,8 @@ def fetch_rankings(tour):
         a = x.get("athlete") or {}
         code, cname = country(a)
         out.append({"rank": int(x.get("current", 0)), "name": a.get("displayName", "?"),
-                    "c": code, "cn": cname, "points": int(float(x.get("points", 0)))})
+                    "i": str(a.get("id", "")), "c": code, "cn": cname,
+                    "points": int(float(x.get("points", 0)))})
     return out
 
 def update_champions(slams):

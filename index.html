@@ -8,8 +8,8 @@
 <style>
 :root{--bg:#0e1512;--card:#17211b;--line:#26332b;--text:#e8ede9;--muted:#93a29a;--acc:#d9e021;--live:#e0552f;--star:#f4c542}
 *{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--text);font:15px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
-.wrap{max-width:980px;margin:0 auto;padding:0 16px}
+body{margin:0;background:var(--bg);color:var(--text);font:16px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+.wrap{max-width:1160px;margin:0 auto;padding:0 16px}
 header{padding:32px 0 20px;border-bottom:2px solid var(--acc)}
 .kicker{font-size:12px;letter-spacing:.22em;color:var(--acc);text-transform:uppercase;font-weight:700}
 h1{margin:6px 0 4px;font-size:32px;letter-spacing:.02em}
@@ -36,7 +36,7 @@ h2 b{color:var(--acc)}
 .chip.star.on{background:var(--star);border-color:var(--star)}
 .match{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:10px 14px;margin-bottom:8px;display:flex;gap:12px;align-items:center}
 .match .who{flex:1;min-width:0}
-.row{display:flex;justify-content:space-between;gap:10px;font-size:14px;padding:2px 0}
+.row{display:flex;justify-content:space-between;gap:10px;font-size:15px;padding:3px 0;align-items:center}
 .row .p{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .row .cc{color:var(--muted);font-size:11.5px}
 .row.w .p{font-weight:700;color:#fff}
@@ -72,6 +72,19 @@ h2 b{color:var(--acc)}
 .my{background:#2a2f14;border:1px solid #4c521f;color:var(--acc);border-radius:999px;padding:5px 12px;font-size:13px;cursor:pointer}
 .my.ctry{background:#152a2f;border-color:#1f4c52;color:#7fd3e0}
 .starmark{color:var(--star)}
+.av{width:28px;height:28px;border-radius:50%;vertical-align:middle;margin-right:7px;background:#0b100d;object-fit:cover}
+.wtick{color:var(--acc);font-weight:800}
+.pn{cursor:pointer}.pn:hover{color:var(--acc);text-decoration:underline}
+.path{background:var(--card);border:1px solid var(--line);border-left:4px solid var(--star);border-radius:12px;padding:12px 16px;margin-bottom:10px}
+.path .pt{font-weight:800;font-size:15px;display:flex;justify-content:space-between;gap:10px;margin-bottom:6px}
+.path .px{background:none;border:0;color:var(--muted);font-size:16px;cursor:pointer}.path .px:hover{color:var(--text)}
+.path .pr{display:flex;gap:6px 10px;align-items:baseline;flex-wrap:wrap;border-top:1px solid var(--line);padding:6px 0;font-size:14px}
+.path .pr .op{flex:1;min-width:0}
+.path .pr b{min-width:110px;color:var(--muted);font-weight:700;font-size:12.5px}
+.path .pr .wl{min-width:18px;font-weight:800}.path .pr .wl.W{color:var(--acc)}.path .pr .wl.L{color:#ff8a78}
+.path .pr .sc{font-variant-numeric:tabular-nums;color:var(--muted);white-space:nowrap}
+.rohc .who .av{width:22px;height:22px;margin-right:5px}
+@media (max-width:560px){.path .pr b{flex:0 0 100%;min-width:0}.path .pr{gap:4px 8px}}
 .ranks{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px}
 .rank{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:6px 16px 10px}
 .rank h3{font-size:13px;letter-spacing:.1em;color:var(--acc);margin:10px 0 6px}
@@ -110,6 +123,7 @@ a{color:#9fc3ab}
   <div id="champs"></div>
   <div class="chips" id="drawchips"></div>
   <div class="chips" id="roundchips"></div>
+  <div id="path"></div>
   <div id="matches"></div>
  </section>
 
@@ -130,7 +144,7 @@ a{color:#9fc3ab}
 
  <h2>Official <b>highlights</b></h2>
  <div class="hl" id="hl"></div>
- <p class="note">Official channels post full match highlights during each Slam. Per-match links (like our World Cup tracker) arrive with the US Open.</p>
+ <p class="note">Official channels post full match highlights during each Slam. Finished singles matches above get a ▶ Highlights link automatically once the official clip is up.</p>
 
  <footer>Personal Grand Slam companion · results &amp; rankings via ESPN's public feed · schedules per the official tournaments · not affiliated with the ATP, WTA, ITF or any tournament · no cookies, no tracking, no ads · your follows stay in your browser</footer>
 </div>
@@ -183,17 +197,17 @@ let FOLLOW={p:[],c:[]};
 try{FOLLOW=Object.assign(FOLLOW,JSON.parse(localStorage.getItem("gs_follow")||"{}"));}catch(e){}
 const saveF=()=>localStorage.setItem("gs_follow",JSON.stringify(FOLLOW));
 const isF=p=>FOLLOW.p.includes(p.n)||(p.c&&FOLLOW.c.includes(p.c));
-let PLAYERS={};   /* name -> {n,c,cn} collected from rankings + draws */
+let PLAYERS={},PIDX={}; /* name -> {n,c,cn} / name -> espn id, from rankings + draws */
 let COUNTRIES={}; /* code -> name */
 const COUNTRY_SEED={USA:"United States",IND:"India",GBR:"Great Britain",ESP:"Spain",ITA:"Italy",FRA:"France",GER:"Germany",SRB:"Serbia",RUS:"Russia",AUS:"Australia",CAN:"Canada",POL:"Poland",BLR:"Belarus",CZE:"Czechia",GRE:"Greece",NOR:"Norway",DEN:"Denmark",SUI:"Switzerland",AUT:"Austria",NED:"Netherlands",BEL:"Belgium",ARG:"Argentina",BRA:"Brazil",CHI:"Chile",JPN:"Japan",CHN:"China",KAZ:"Kazakhstan",TUN:"Tunisia",RSA:"South Africa",CRO:"Croatia",BUL:"Bulgaria",HUN:"Hungary",POR:"Portugal",SWE:"Sweden",FIN:"Finland",UKR:"Ukraine",ROU:"Romania",COL:"Colombia",MEX:"Mexico",KOR:"South Korea"};
 function collectPlayers(){
- PLAYERS={};COUNTRIES=Object.assign({},COUNTRY_SEED);
- const add=p=>{if(p&&p.n&&p.n!=="TBD"){PLAYERS[p.n]={n:p.n,c:p.c||"",cn:p.cn||""};if(p.c)COUNTRIES[p.c]=COUNTRIES[p.c]||p.cn||p.c;}};
+ PLAYERS={};PIDX={};COUNTRIES=Object.assign({},COUNTRY_SEED);
+ const add=p=>{if(p&&p.n&&p.n!=="TBD"){PLAYERS[p.n]={n:p.n,c:p.c||"",cn:p.cn||""};if(p.i)PIDX[p.n]=p.i;if(p.c)COUNTRIES[p.c]=COUNTRIES[p.c]||p.cn||p.c;}};
  (DATA?.slams||[]).forEach(s=>s.draws.forEach(dr=>dr.matches.forEach(m=>{
    /* doubles teams arrive as "A / B" — index both halves too */
    [m.a,m.b].forEach(side=>{add(side);(side.n||"").split(" / ").forEach(nm=>{if(nm&&nm!==side.n)add({n:nm.trim(),c:side.c,cn:side.cn});});});
  })));
- Object.values(DATA?.rankings||{}).forEach(list=>list.forEach(x=>add({n:x.name,c:x.c,cn:x.cn})));
+ Object.values(DATA?.rankings||{}).forEach(list=>list.forEach(x=>add({n:x.name,i:x.i,c:x.c,cn:x.cn})));
 }
 function renderMine(){
  document.getElementById("fmine").innerHTML=
@@ -217,6 +231,8 @@ document.addEventListener("click",e=>{
  const ac=e.target.closest("[data-addc]");if(ac){FOLLOW.c.push(ac.dataset.addc);saveF();renderMine();renderSugg(document.getElementById("fsearch").value);renderMatches();renderRanks();return;}
  const up=e.target.closest("[data-unp]");if(up){FOLLOW.p=FOLLOW.p.filter(x=>x!==up.dataset.unp);saveF();renderMine();renderMatches();renderRanks();return;}
  const uc=e.target.closest("[data-unc]");if(uc){FOLLOW.c=FOLLOW.c.filter(x=>x!==uc.dataset.unc);saveF();renderMine();renderMatches();renderRanks();return;}
+ const pp=e.target.closest("[data-pp]");if(pp){showPath(pp.dataset.pp);return;}
+ const px=e.target.closest("[data-ppx]");if(px){document.getElementById("path").innerHTML="";return;}
  const d=e.target.closest("[data-d]");if(d){curDraw=+d.dataset.d;curRound=null;renderMatches();return;}
  const r=e.target.closest("[data-r]");if(r){curRound=r.dataset.r;renderMatches();return;}
  const f=e.target.closest("#folltog");if(f){follOnly=!follOnly;renderMatches();}
@@ -227,6 +243,28 @@ const roundOrder=["Final","Semifinal","Quarterfinal","Round 4","Round 3","Round 
 function rounds(dr){const rs=[...new Set(dr.matches.map(m=>m.round).filter(Boolean))];
  return rs.sort((a,b)=>{const ia=roundOrder.findIndex(r=>a.startsWith(r)),ib=roundOrder.findIndex(r=>b.startsWith(r));return (ia<0?99:ia)-(ib<0?99:ib);});}
 function sideFollowed(side){if(isF(side))return true;return (side.n||"").split(" / ").some(nm=>FOLLOW.p.includes(nm.trim()));}
+const av=p=>p&&p.i?'<img class="av" loading="lazy" src="https://a.espncdn.com/i/headshots/tennis/players/full/'+p.i+'.png" onerror="this.remove()" alt="">':"";
+const hlnk=m=>m.done&&HL[m.id]?' <a class="hlnk" href="https://www.youtube.com/watch?v='+esc(HL[m.id].yt)+'" target="_blank" rel="noopener">▶ Highlights</a>':"";
+function showPath(name){
+ const el=document.getElementById("path"),slam=DATA?.slams[0];
+ if(!slam){el.innerHTML="";return;}
+ const rows=[];
+ slam.draws.forEach(dr=>dr.matches.forEach(m=>{
+  const mine=[m.a,m.b].find(s=>s.n===name||(s.n||"").split(" / ").map(x=>x.trim()).includes(name));
+  if(!mine)return;
+  const opp=mine===m.a?m.b:m.a;
+  rows.push({dr:dr.draw,m,mine,opp});
+ }));
+ if(!rows.length){el.innerHTML="";return;}
+ rows.sort((a,b)=>{const i=r=>{const k=roundOrder.findIndex(x=>r.startsWith(x));return k<0?99:k;};return i(b.m.round)-i(a.m.round);});
+ el.innerHTML='<div class="path"><div class="pt"><span>'+av(rows.find(r=>r.mine.i)?.mine)+esc(name)+" — path through "+esc(slam.name)+'</span><button class="px" data-ppx="1" title="Close">✕</button></div>'
+  +rows.map(r=>{
+   const sc=r.mine.s.length?r.mine.s.map((v,k)=>v+"-"+(r.opp.s[k]??"")).join("  "):"";
+   const wl=r.m.done?(r.mine.w?"W":"L"):"";
+   return '<div class="pr"><b>'+esc(r.dr.replace(/^(Men's|Women's|Mixed) /,""))+" "+esc(r.m.round)+'</b><span class="wl '+wl+'">'+(wl||"·")+'</span><span class="op">vs '+av(r.opp)+esc(r.opp.n)+(r.opp.c?' <span class="cc">'+esc(r.opp.c)+"</span>":"")+'</span><span class="sc">'+esc(sc||(r.m.done?"":r.m.state||"Scheduled"))+"</span>"+hlnk(r.m)+"</div>";
+  }).join("")+"</div>";
+ el.scrollIntoView({behavior:"smooth",block:"nearest"});
+}
 function renderMatches(){
  if(!DATA||!DATA.slams.length)return;
  const slam=DATA.slams[0],dr=slam.draws[curDraw],rs=rounds(dr);
@@ -240,8 +278,8 @@ function renderMatches(){
  else ms=dr.matches.filter(m=>m.round===curRound);
  document.getElementById("matches").innerHTML=ms.map(m=>{
   const live=!m.done&&m.state&&!/scheduled/i.test(m.state);
-  const row=p=>'<div class="row'+(p.w?" w":"")+'"><span class="p">'+(sideFollowed(p)?'<span class="starmark">⭐ </span>':"")+(p.w?"🏆 ":"")+esc(p.n)+(p.c?' <span class="cc">'+esc(p.c)+"</span>":"")+'</span><span class="sets">'+p.s.join(" ")+"</span></div>";
-  return '<div class="match'+(live?" live":"")+'"><div class="who">'+row(m.a)+row(m.b)+'</div><div class="st">'+(m._draw?esc(m._draw)+" · ":"")+esc(m.round&&m._draw?m.round:(m.done?"Completed":m.state||"Scheduled"))+(m.date?"<br>"+new Date(m.date).toLocaleDateString(undefined,{month:"short",day:"numeric"}):"")+(m.done&&HL[m.id]?'<br><a class="hlnk" href="https://www.youtube.com/watch?v='+esc(HL[m.id].yt)+'" target="_blank" rel="noopener">▶ Highlights</a>':"")+"</div></div>";
+  const row=p=>'<div class="row'+(p.w?" w":"")+'"><span class="p">'+av(p)+(sideFollowed(p)?'<span class="starmark">⭐ </span>':"")+(p.w?'<span class="wtick">✓</span> ':"")+'<span class="pn" data-pp="'+esc(p.n)+'">'+esc(p.n)+"</span>"+(p.c?' <span class="cc">'+esc(p.c)+"</span>":"")+'</span><span class="sets">'+p.s.join(" ")+"</span></div>";
+  return '<div class="match'+(live?" live":"")+'"><div class="who">'+row(m.a)+row(m.b)+'</div><div class="st">'+(m._draw?esc(m._draw)+" · ":"")+esc(m.round&&m._draw?m.round:(m.done?"Completed":m.state||"Scheduled"))+(m.date?"<br>"+new Date(m.date).toLocaleDateString(undefined,{month:"short",day:"numeric"}):"")+(m.done&&HL[m.id]?"<br>"+hlnk(m):"")+"</div></div>";
  }).join("")||'<p class="note">'+(follOnly?"None of your followed players/countries are in this Slam — add more above.":"No matches in this round yet.")+"</p>";
 }
 /* Catch-up brief: "haven't followed? here's where we are" — generated purely from the data */
@@ -300,7 +338,7 @@ function renderRoH(champs){
   const yrs=Object.keys(byYear).sort((a,b)=>b-a).slice(0,4).map(y=>{
    const lines=byYear[y].map(c=>{
     const drawTag=/Men's Singles|Women's Singles/.test(c.draw)?(c.draw.startsWith("Men")?"M":"W"):esc(c.draw);
-    return '<span class="who">'+drawTag+" · <b>"+esc(c.champion)+"</b>"+(c.champC?' <i>'+esc(c.champC)+"</i>":"")+' <i>d. '+esc(c.runnerUp)+"</i></span>";
+    return '<span class="who">'+drawTag+" · "+av({i:PIDX[c.champion]})+"🏆 <b>"+esc(c.champion)+"</b>"+(c.champC?' <i>'+esc(c.champC)+"</i>":"")+' <i>d. '+esc(c.runnerUp)+"</i></span>";
    }).join("");
    return '<div class="yr"><b>'+y+"</b> "+lines+"</div>";
   }).join("");
