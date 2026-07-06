@@ -1,0 +1,29 @@
+{
+"note": "Roll of honour, accumulated automatically as finals complete (2023-2025 seeded from public record).",
+"champions": [
+{"year":2025,"slam":"US Open","draw":"Men's Singles","champion":"Carlos Alcaraz","champC":"ESP","runnerUp":"Jannik Sinner","runnerC":"ITA"},
+{"year":2025,"slam":"US Open","draw":"Women's Singles","champion":"Aryna Sabalenka","champC":"BLR","runnerUp":"Amanda Anisimova","runnerC":"USA"},
+{"year":2025,"slam":"Wimbledon","draw":"Men's Singles","champion":"Jannik Sinner","champC":"ITA","runnerUp":"Carlos Alcaraz","runnerC":"ESP"},
+{"year":2025,"slam":"Wimbledon","draw":"Women's Singles","champion":"Iga Swiatek","champC":"POL","runnerUp":"Amanda Anisimova","runnerC":"USA"},
+{"year":2025,"slam":"Roland-Garros","draw":"Men's Singles","champion":"Carlos Alcaraz","champC":"ESP","runnerUp":"Jannik Sinner","runnerC":"ITA"},
+{"year":2025,"slam":"Roland-Garros","draw":"Women's Singles","champion":"Coco Gauff","champC":"USA","runnerUp":"Aryna Sabalenka","runnerC":"BLR"},
+{"year":2025,"slam":"Australian Open","draw":"Men's Singles","champion":"Jannik Sinner","champC":"ITA","runnerUp":"Alexander Zverev","runnerC":"GER"},
+{"year":2025,"slam":"Australian Open","draw":"Women's Singles","champion":"Madison Keys","champC":"USA","runnerUp":"Aryna Sabalenka","runnerC":"BLR"},
+{"year":2024,"slam":"US Open","draw":"Men's Singles","champion":"Jannik Sinner","champC":"ITA","runnerUp":"Taylor Fritz","runnerC":"USA"},
+{"year":2024,"slam":"US Open","draw":"Women's Singles","champion":"Aryna Sabalenka","champC":"BLR","runnerUp":"Jessica Pegula","runnerC":"USA"},
+{"year":2024,"slam":"Wimbledon","draw":"Men's Singles","champion":"Carlos Alcaraz","champC":"ESP","runnerUp":"Novak Djokovic","runnerC":"SRB"},
+{"year":2024,"slam":"Wimbledon","draw":"Women's Singles","champion":"Barbora Krejcikova","champC":"CZE","runnerUp":"Jasmine Paolini","runnerC":"ITA"},
+{"year":2024,"slam":"Roland-Garros","draw":"Men's Singles","champion":"Carlos Alcaraz","champC":"ESP","runnerUp":"Alexander Zverev","runnerC":"GER"},
+{"year":2024,"slam":"Roland-Garros","draw":"Women's Singles","champion":"Iga Swiatek","champC":"POL","runnerUp":"Jasmine Paolini","runnerC":"ITA"},
+{"year":2024,"slam":"Australian Open","draw":"Men's Singles","champion":"Jannik Sinner","champC":"ITA","runnerUp":"Daniil Medvedev","runnerC":"RUS"},
+{"year":2024,"slam":"Australian Open","draw":"Women's Singles","champion":"Aryna Sabalenka","champC":"BLR","runnerUp":"Zheng Qinwen","runnerC":"CHN"},
+{"year":2023,"slam":"US Open","draw":"Men's Singles","champion":"Novak Djokovic","champC":"SRB","runnerUp":"Daniil Medvedev","runnerC":"RUS"},
+{"year":2023,"slam":"US Open","draw":"Women's Singles","champion":"Coco Gauff","champC":"USA","runnerUp":"Aryna Sabalenka","runnerC":"BLR"},
+{"year":2023,"slam":"Wimbledon","draw":"Men's Singles","champion":"Carlos Alcaraz","champC":"ESP","runnerUp":"Novak Djokovic","runnerC":"SRB"},
+{"year":2023,"slam":"Wimbledon","draw":"Women's Singles","champion":"Marketa Vondrousova","champC":"CZE","runnerUp":"Ons Jabeur","runnerC":"TUN"},
+{"year":2023,"slam":"Roland-Garros","draw":"Men's Singles","champion":"Novak Djokovic","champC":"SRB","runnerUp":"Casper Ruud","runnerC":"NOR"},
+{"year":2023,"slam":"Roland-Garros","draw":"Women's Singles","champion":"Iga Swiatek","champC":"POL","runnerUp":"Karolina Muchova","runnerC":"CZE"},
+{"year":2023,"slam":"Australian Open","draw":"Men's Singles","champion":"Novak Djokovic","champC":"SRB","runnerUp":"Stefanos Tsitsipas","runnerC":"GRE"},
+{"year":2023,"slam":"Australian Open","draw":"Women's Singles","champion":"Aryna Sabalenka","champC":"BLR","runnerUp":"Elena Rybakina","runnerC":"KAZ"}
+]
+}
