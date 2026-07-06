@@ -12,7 +12,7 @@ body{margin:0;background:var(--bg);color:var(--text);font:16px/1.5 -apple-system
 .wrap{max-width:1160px;margin:0 auto;padding:0 16px}
 header{padding:32px 0 20px;border-bottom:2px solid var(--acc)}
 .kicker{font-size:12px;letter-spacing:.22em;color:var(--acc);text-transform:uppercase;font-weight:700}
-h1{margin:6px 0 4px;font-size:32px;letter-spacing:.02em}
+h1{margin:6px 0 4px;font-size:33px;font-weight:900;letter-spacing:-.01em}
 .sub{color:var(--muted);font-size:14px}
 h2{font-size:13px;letter-spacing:.18em;text-transform:uppercase;color:var(--muted);margin:34px 0 14px;font-weight:700}
 h2 b{color:var(--acc)}
@@ -51,6 +51,11 @@ h2 b{color:var(--acc)}
 .brief .bl b{color:var(--acc)}
 .brief .alert{color:#ff8a78;font-weight:700}
 .brief .dim{color:var(--muted)}
+.tzrow{font-size:12.5px;color:var(--muted);margin:-4px 0 12px}
+.tzrow select{background:var(--card);border:1px solid var(--line);border-radius:8px;color:var(--text);font-size:12.5px;padding:4px 8px}
+.tzrow .dim{color:var(--muted)}
+.mcal{color:var(--muted);text-decoration:none;border:1px solid var(--line);border-radius:6px;padding:1px 6px;font-size:10.5px;white-space:nowrap}
+.mcal:hover{border-color:var(--acc);color:var(--text)}
 .champline{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:10px 14px;margin-bottom:8px;font-size:14px}
 .champline b{color:var(--acc)}
 /* roll of honour */
@@ -122,6 +127,7 @@ a{color:#9fc3ab}
 
  <section id="livewrap" style="display:none">
   <h2 id="livehead"></h2>
+  <div class="tzrow">🕐 Show match times in <select id="tzsel"><option value="local">your time</option><option value="venue">venue time</option></select> <span class="dim" id="tzname"></span></div>
   <div class="brief" id="brief" style="display:none"></div>
   <div id="champs"></div>
   <div class="chips" id="drawchips"></div>
@@ -156,13 +162,13 @@ a{color:#9fc3ab}
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 /* ── the four majors — editions with verified dates; unknown future years degrade to "dates TBA" ── */
 const SLAMS=[
- {name:"Australian Open",flag:"🇦🇺",venue:"Melbourne Park",surface:"Hard",yt:"https://www.youtube.com/@australianopen",
+ {name:"Australian Open",flag:"🇦🇺",venue:"Melbourne Park",surface:"Hard",tz:"Australia/Melbourne",yt:"https://www.youtube.com/@australianopen",
   eds:[{label:"2027",start:"2027-01-11",main:"2027-01-17",end:"2027-01-31"}]},
- {name:"Roland-Garros",flag:"🇫🇷",venue:"Paris",surface:"Clay",yt:"https://www.youtube.com/@rolandgarros",
+ {name:"Roland-Garros",flag:"🇫🇷",venue:"Paris",surface:"Clay",tz:"Europe/Paris",yt:"https://www.youtube.com/@rolandgarros",
   eds:[{label:"2027",start:"2027-05-17",main:"2027-05-23",end:"2027-06-06"}]},
- {name:"Wimbledon",flag:"🇬🇧",venue:"All England Club, London",surface:"Grass",yt:"https://www.youtube.com/@wimbledon",
+ {name:"Wimbledon",flag:"🇬🇧",venue:"All England Club, London",surface:"Grass",tz:"Europe/London",yt:"https://www.youtube.com/@wimbledon",
   eds:[{label:"2026",start:"2026-06-22",main:"2026-06-29",end:"2026-07-12"},{label:"2027",start:"2027-06-28",main:"2027-06-28",end:"2027-07-11"}]},
- {name:"US Open",flag:"🇺🇸",venue:"USTA Billie Jean King NTC, New York",surface:"Hard",yt:"https://www.youtube.com/@usopen",
+ {name:"US Open",flag:"🇺🇸",venue:"USTA Billie Jean King NTC, New York",surface:"Hard",tz:"America/New_York",yt:"https://www.youtube.com/@usopen",
   eds:[{label:"2026",start:"2026-08-23",main:"2026-08-30",end:"2026-09-13"}]}
 ];
 /* current-or-next edition; null => all known editions are past (show "dates TBA") */
@@ -229,6 +235,7 @@ function renderSugg(q){
  box.innerHTML=cs.concat(ps).join("")||'<p class="note">No player or country matches — players appear here once they\'re in a draw or the top 10.</p>';
 }
 document.getElementById("fsearch").addEventListener("input",e=>renderSugg(e.target.value));
+document.getElementById("tzsel").addEventListener("change",e=>{TZ=e.target.value;localStorage.setItem("gs_tz",TZ);document.getElementById("tzname").textContent=tzLabel();renderMatches();});
 document.addEventListener("click",e=>{
  const ap=e.target.closest("[data-addp]");if(ap){FOLLOW.p.push(ap.dataset.addp);saveF();renderMine();renderSugg(document.getElementById("fsearch").value);renderMatches();renderRanks();return;}
  const ac=e.target.closest("[data-addc]");if(ac){FOLLOW.c.push(ac.dataset.addc);saveF();renderMine();renderSugg(document.getElementById("fsearch").value);renderMatches();renderRanks();return;}
@@ -241,6 +248,21 @@ document.addEventListener("click",e=>{
  const r=e.target.closest("[data-r]");if(r){curRound=r.dataset.r;renderMatches();return;}
  const f=e.target.closest("#folltog");if(f){follOnly=!follOnly;renderMatches();}
 });
+/* ── timezone choice: your local zone vs the venue's ── */
+let TZ=localStorage.getItem("gs_tz")||"local";
+function curSlamTz(){const s=DATA&&DATA.slams[0]&&SLAMS.find(x=>x.name===DATA.slams[0].name);return s?s.tz:undefined;}
+function fmtWhen(iso){if(!iso)return"";const o={month:"short",day:"numeric",hour:"numeric",minute:"2-digit",timeZoneName:"short"};
+ if(TZ==="venue"&&curSlamTz())o.timeZone=curSlamTz();
+ return new Date(iso).toLocaleString(undefined,o);}
+function tzLabel(){try{const o={timeZoneName:"long"};if(TZ==="venue"&&curSlamTz())o.timeZone=curSlamTz();
+ return "· "+new Intl.DateTimeFormat(undefined,o).formatToParts(new Date()).find(p=>p.type==="timeZoneName").value;}catch(e){return"";}}
+/* per-match calendar (scheduled matches; tennis has no fixed length — 2h30 estimate) */
+const zstamp=t=>new Date(t).toISOString().replace(/[-:]/g,"").replace(/\.\d{3}/,"");
+function gcalM(m,slam){const t0=Date.parse(m.date),t1=t0+150*60000;
+ return "https://calendar.google.com/calendar/render?action=TEMPLATE&text="+encodeURIComponent(m.a.n+" v "+m.b.n+" 🎾 "+slam.name)+"&dates="+zstamp(t0)+"/"+zstamp(t1)+"&details="+encodeURIComponent(slam.name+" · "+(m.round||"")+" — scheduled start; match length varies");}
+function icsM(m,slam){const t0=Date.parse(m.date),t1=t0+150*60000;
+ const v=["BEGIN:VCALENDAR","VERSION:2.0","PRODID:grandslams","BEGIN:VEVENT","UID:"+zstamp(t0)+(m.a.n+m.b.n).replace(/\W/g,"")+"@grandslams","DTSTART:"+zstamp(t0),"DTEND:"+zstamp(t1),"SUMMARY:"+(m.a.n+" v "+m.b.n+" 🎾 "+slam.name).replace(/,/g,""),"DESCRIPTION:"+(m.round||"")+" - scheduled start; length varies","END:VEVENT","END:VCALENDAR"].join("\r\n");
+ return "data:text/calendar;charset=utf-8,"+encodeURIComponent(v);}
 /* ── live slam results ── */
 let DATA=null,HL={},curDraw=0,curRound=null,follOnly=false;
 const roundOrder=["Final","Semifinal","Quarterfinal","Round 4","Round 3","Round 2","Round 1","Qualifying Final","Qualifying 2nd Round","Qualifying 1st Round"];
@@ -289,7 +311,9 @@ function renderMatches(){
  document.getElementById("matches").innerHTML=ms.map(m=>{
   const live=!m.done&&m.state&&!/scheduled/i.test(m.state);
   const row=p=>'<div class="row'+(p.w?" w":"")+'"><span class="p">'+av(p)+(sideFollowed(p)?'<span class="starmark">⭐ </span>':"")+(p.w?'<span class="wtick">✓</span> ':"")+'<span class="pn" data-pp="'+esc(p.n)+'">'+esc(p.n)+"</span>"+(p.c?' <span class="cc">'+esc(p.c)+"</span>":"")+'</span><span class="sets">'+p.s.join(" ")+"</span></div>";
-  return '<div class="match'+(live?" live":"")+'"><div class="who">'+row(m.a)+row(m.b)+'</div><div class="st">'+(m._draw?esc(m._draw)+" · ":"")+esc(m.round&&m._draw?m.round:(m.done?"Completed":m.state||"Scheduled"))+(m.date?"<br>"+new Date(m.date).toLocaleDateString(undefined,{month:"short",day:"numeric"}):"")+(m.done&&HL[m.id]?"<br>"+hlnk(m):"")+"</div></div>";
+  const when=m.date?(m.done?new Date(m.date).toLocaleDateString(undefined,{month:"short",day:"numeric"}):fmtWhen(m.date)):"";
+  const cal=(!m.done&&!live&&m.date&&m.a.n!=="TBD")?'<br><a class="mcal" target="_blank" rel="noopener" href="'+gcalM(m,slam)+'">📅 Gcal</a> <a class="mcal" href="'+icsM(m,slam)+'" download="match.ics">iCal</a>':"";
+  return '<div class="match'+(live?" live":"")+'"><div class="who">'+row(m.a)+row(m.b)+'</div><div class="st">'+(m._draw?esc(m._draw)+" · ":"")+esc(m.round&&m._draw?m.round:(m.done?"Completed":m.state||"Scheduled"))+(when?"<br>"+when:"")+cal+(m.done&&HL[m.id]?"<br>"+hlnk(m):"")+"</div></div>";
  }).join("")||'<p class="note">'+(follOnly?"None of your followed players/countries are in this Slam — add more above.":"No matches in this round yet.")+"</p>";
 }
 /* Catch-up brief: "haven't followed? here's where we are" — generated purely from the data */
@@ -378,6 +402,7 @@ async function boot(){
    if(DATA.slams.length){
     document.getElementById("livewrap").style.display="";
     document.getElementById("livehead").innerHTML="🎾 <b>"+esc(DATA.slams[0].name)+"</b> — every draw, every result";
+    document.getElementById("tzsel").value=TZ;document.getElementById("tzname").textContent=tzLabel();
     renderBrief(DATA.slams[0]);renderChamps(DATA.slams[0]);renderMatches();
    }
    renderRanks();
