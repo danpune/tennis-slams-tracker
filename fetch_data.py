@@ -13,6 +13,7 @@ import json, os, re, sys, urllib.request
 from datetime import datetime, timezone
 
 BASE = "https://site.api.espn.com/apis/site/v2/sports/tennis"
+CANON = {"Roland Garros": "Roland-Garros"}  # ESPN's spelling -> the site's (and the tournament's own)
 UA = {"User-Agent": "grandslams-tracker/1.0 (github.com/danpune/tennis-slams-tracker)"}
 
 def get(url):
@@ -67,7 +68,8 @@ def fetch_tour(tour, rankmap, dates=None):
                                 "date": c.get("date", ""), "done": bool(st.get("completed")),
                                 "state": st.get("description", ""), "a": comps[0], "b": comps[1]})
             draws.append({"draw": gname, "matches": matches})
-        events.append({"tour": tour, "name": e.get("name", ""), "start": e.get("date", ""),
+        nm = e.get("name", "")
+        events.append({"tour": tour, "name": CANON.get(nm, nm), "start": e.get("date", ""),
                        "end": e.get("endDate", ""), "venue": (e.get("venue") or {}).get("fullName", ""),
                        "draws": draws})
     return events
