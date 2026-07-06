@@ -1,0 +1,203 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Grand Slam Tracker — Tennis Majors, Schedule & Results</title>
+<meta name="description" content="All four tennis Grand Slams in one place — dates, countdown, results for every draw, top-10 rankings, highlights. No ads, no tracking.">
+<style>
+:root{--bg:#0e1512;--card:#17211b;--line:#26332b;--text:#e8ede9;--muted:#93a29a;--acc:#d9e021;--acc2:#3fa46a;--live:#e0552f}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font:15px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+.wrap{max-width:980px;margin:0 auto;padding:0 16px}
+header{padding:34px 0 22px;border-bottom:2px solid var(--acc)}
+.kicker{font-size:12px;letter-spacing:.22em;color:var(--acc);text-transform:uppercase;font-weight:700}
+h1{margin:6px 0 4px;font-size:34px;letter-spacing:.02em}
+.sub{color:var(--muted);font-size:14px}
+h2{font-size:13px;letter-spacing:.18em;text-transform:uppercase;color:var(--muted);margin:34px 0 14px;font-weight:700}
+h2 b{color:var(--acc)}
+/* countdown */
+.count{display:flex;gap:14px;align-items:baseline;flex-wrap:wrap;background:var(--card);border:1px solid var(--line);border-left:4px solid var(--acc);border-radius:12px;padding:16px 18px;margin-top:22px}
+.count .to{font-size:14px;color:var(--muted)}
+.count .big{font-size:26px;font-weight:800;font-variant-numeric:tabular-nums}
+.count .ev{font-size:16px;font-weight:700}
+/* slam cards */
+.slams{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
+.slam{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 16px;display:flex;flex-direction:column;gap:6px}
+.slam .nm{font-weight:800;font-size:16px}
+.slam .meta{font-size:12.5px;color:var(--muted)}
+.slam .dates{font-size:13.5px}
+.badge{display:inline-block;font-size:10.5px;letter-spacing:.08em;font-weight:700;border-radius:5px;padding:2px 7px;text-transform:uppercase}
+.b-live{background:#3a1f1b;color:#ff8a78}.b-next{background:#32391a;color:var(--acc)}.b-done{background:#223028;color:var(--muted)}.b-soon{background:#223028;color:#9fc3ab}
+.cal{display:inline-block;font-size:12px;border:1px solid var(--line);border-radius:8px;padding:5px 10px;color:var(--text);text-decoration:none;margin-right:6px;margin-top:4px}
+.cal:hover{border-color:var(--acc)}
+/* results */
+.chips{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0 14px}
+.chip{border:1px solid var(--line);background:none;color:var(--text);border-radius:999px;padding:7px 14px;font-size:13px;cursor:pointer}
+.chip.on{background:var(--acc);color:#111;border-color:var(--acc);font-weight:700}
+.match{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:10px 14px;margin-bottom:8px;display:flex;gap:12px;align-items:center}
+.match .who{flex:1;min-width:0}
+.row{display:flex;justify-content:space-between;gap:10px;font-size:14px;padding:2px 0}
+.row .p{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.row.w .p{font-weight:700;color:#fff}
+.row .sets{font-variant-numeric:tabular-nums;color:var(--muted);white-space:nowrap}
+.row.w .sets{color:var(--acc)}
+.match .st{font-size:11px;color:var(--muted);text-align:right;flex:0 0 auto}
+.match.live{border-left:3px solid var(--live)}
+.match.live .st{color:var(--live);font-weight:700}
+.champ{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:10px 14px;margin-bottom:8px;font-size:14px}
+.champ b{color:var(--acc)}
+/* rankings */
+.ranks{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px}
+.rank{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:6px 16px 10px}
+.rank h3{font-size:13px;letter-spacing:.1em;color:var(--acc);margin:10px 0 6px}
+.rank ol{margin:0;padding:0;list-style:none}
+.rank li{display:flex;gap:10px;padding:6px 0;border-top:1px solid var(--line);font-size:14px}
+.rank li b{min-width:26px;color:var(--muted);font-weight:700;font-variant-numeric:tabular-nums}
+.rank li span{flex:1}
+.rank li i{font-style:normal;color:var(--muted);font-size:12.5px;font-variant-numeric:tabular-nums}
+/* highlights */
+.hl{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px}
+.hl a{display:block;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:12px 14px;color:var(--text);text-decoration:none;font-size:14px}
+.hl a:hover{border-color:var(--acc)}
+.hl small{display:block;color:var(--muted);margin-top:3px;font-size:12px}
+footer{margin:44px 0 26px;padding-top:14px;border-top:1px solid var(--line);color:var(--muted);font-size:12px}
+.note{font-size:12px;color:var(--muted)}
+a{color:#9fc3ab}
+</style>
+</head>
+<body>
+<header><div class="wrap">
+ <div class="kicker">🎾 Tennis Majors · ATP &amp; WTA</div>
+ <h1>Grand Slam Tracker</h1>
+ <div class="sub">All four majors in one place — dates, results for every draw, top-10 rankings · <span id="upd"></span></div>
+</div></header>
+<div class="wrap">
+
+ <div class="count" id="count"></div>
+
+ <h2>The <b>four majors</b></h2>
+ <div class="slams" id="slams"></div>
+
+ <section id="livewrap" style="display:none">
+  <h2 id="livehead"></h2>
+  <div id="champs"></div>
+  <div class="chips" id="drawchips"></div>
+  <div class="chips" id="roundchips"></div>
+  <div id="matches"></div>
+ </section>
+
+ <h2>World <b>top 10</b></h2>
+ <div class="ranks" id="ranks"></div>
+
+ <h2>Official <b>highlights</b></h2>
+ <div class="hl" id="hl"></div>
+ <p class="note">Official channels post full match highlights during each Slam. Per-match highlight links (like our World Cup tracker) arrive with the US Open.</p>
+
+ <footer>Personal Grand Slam companion · results &amp; rankings via ESPN's public feed · schedules per the official tournaments · not affiliated with the ATP, WTA, ITF or any tournament · no cookies, no tracking, no ads</footer>
+</div>
+<script>
+"use strict";
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+/* the four majors — dates from the official tournaments (verified) */
+const SLAMS=[
+ {name:"Australian Open",flag:"🇦🇺",venue:"Melbourne Park",surface:"Hard",yt:"https://www.youtube.com/@australianopen",
+  next:{label:"2027",start:"2027-01-11",main:"2027-01-17",end:"2027-01-31"}},
+ {name:"Roland-Garros",flag:"🇫🇷",venue:"Paris",surface:"Clay",yt:"https://www.youtube.com/@rolandgarros",
+  next:{label:"2027",start:"2027-05-17",main:"2027-05-23",end:"2027-06-06"}},
+ {name:"Wimbledon",flag:"🇬🇧",venue:"All England Club, London",surface:"Grass",yt:"https://www.youtube.com/@wimbledon",
+  next:{label:"2027",start:"2027-06-28",main:"2027-06-28",end:"2027-07-11"}},
+ {name:"US Open",flag:"🇺🇸",venue:"USTA Billie Jean King NTC, New York",surface:"Hard",yt:"https://www.youtube.com/@usopen",
+  next:{label:"2026",start:"2026-08-23",main:"2026-08-30",end:"2026-09-13"}}
+];
+const fmtD=iso=>new Date(iso+"T12:00:00Z").toLocaleDateString(undefined,{month:"short",day:"numeric"});
+const fmtDY=iso=>new Date(iso+"T12:00:00Z").toLocaleDateString(undefined,{month:"short",day:"numeric",year:"numeric"});
+function gcal(s){const d0=s.next.start.replace(/-/g,""),d1=new Date(Date.parse(s.next.end+"T12:00:00Z")+864e5).toISOString().slice(0,10).replace(/-/g,"");
+ return "https://calendar.google.com/calendar/render?action=TEMPLATE&text="+encodeURIComponent(s.name+" "+s.next.label+" 🎾")+"&dates="+d0+"/"+d1+"&details="+encodeURIComponent("Tennis Grand Slam · "+s.venue)+"&location="+encodeURIComponent(s.venue);}
+function ics(s){const d0=s.next.start.replace(/-/g,""),d1=new Date(Date.parse(s.next.end+"T12:00:00Z")+864e5).toISOString().slice(0,10).replace(/-/g,"");
+ const v=["BEGIN:VCALENDAR","VERSION:2.0","PRODID:grandslams","BEGIN:VEVENT","UID:"+s.name.replace(/\W/g,"")+d0+"@grandslams","DTSTART;VALUE=DATE:"+d0,"DTEND;VALUE=DATE:"+d1,"SUMMARY:"+s.name+" "+s.next.label+" 🎾","LOCATION:"+s.venue,"END:VEVENT","END:VCALENDAR"].join("\r\n");
+ return "data:text/calendar;charset=utf-8,"+encodeURIComponent(v);}
+/* countdown to the next main draw */
+function renderCount(){
+ const now=Date.now();
+ const up=SLAMS.map(s=>({s,t:Date.parse(s.next.main+"T15:00:00Z")})).filter(x=>x.t>now).sort((a,b)=>a.t-b.t)[0];
+ const el=document.getElementById("count");
+ if(!up){el.style.display="none";return;}
+ const d=up.t-now,days=Math.floor(d/864e5),h=Math.floor(d%864e5/36e5),m=Math.floor(d%36e5/6e4),sec=Math.floor(d%6e4/1e3);
+ el.innerHTML='<span class="to">NEXT SLAM</span><span class="ev">'+up.s.flag+" "+esc(up.s.name)+" "+up.s.next.label+'</span><span class="big">'+days+"d "+h+"h "+m+"m "+sec+'s</span><span class="to">to main draw · '+fmtD(up.s.next.main)+"</span>";
+}
+setInterval(renderCount,1000);
+/* slam season cards */
+function slamStatus(s){
+ const now=Date.now(),t0=Date.parse(s.next.start),t1=Date.parse(s.next.end)+864e5;
+ if(now>=t0&&now<=t1)return["b-live","IN PROGRESS"];
+ const nxt=SLAMS.map(x=>Date.parse(x.next.main)).filter(t=>t>now).sort()[0];
+ if(Date.parse(s.next.main)===nxt)return["b-next","NEXT UP"];
+ return["b-soon","UPCOMING"];
+}
+function renderSlams(){
+ document.getElementById("slams").innerHTML=SLAMS.map(s=>{
+  const[cls,lab]=slamStatus(s);
+  return '<div class="slam"><div><span class="badge '+cls+'">'+lab+'</span></div><div class="nm">'+s.flag+" "+esc(s.name)+" "+s.next.label+'</div><div class="meta">'+esc(s.venue)+" · "+s.surface+'</div><div class="dates">'+fmtD(s.next.start)+" – "+fmtDY(s.next.end)+'</div><div><a class="cal" target="_blank" rel="noopener" href="'+gcal(s)+'">📅 Gcal</a><a class="cal" href="'+ics(s)+'" download="'+esc(s.name).replace(/\s/g,"")+'.ics">📅 iCal</a></div></div>';
+ }).join("");
+}
+/* live slam results — all five draws */
+let DATA=null,curDraw=0,curRound=null;
+const roundOrder=["Final","Semifinal","Quarterfinal","Round 4","Round 3","Round 2","Round 1","Qualifying Final","Qualifying 2nd Round","Qualifying 1st Round"];
+function rounds(dr){const rs=[...new Set(dr.matches.map(m=>m.round).filter(Boolean))];
+ return rs.sort((a,b)=>{const ia=roundOrder.findIndex(r=>a.startsWith(r)),ib=roundOrder.findIndex(r=>b.startsWith(r));return (ia<0?99:ia)-(ib<0?99:ib);});}
+function setsHTML(m){const n=Math.max(m.a.s.length,m.b.s.length);let out=[];for(let i=0;i<n;i++)out.push((m.a.s[i]??"")+"–"+(m.b.s[i]??""));return out.join("  ");}
+function renderMatches(){
+ const slam=DATA.slams[0];if(!slam)return;
+ const dr=slam.draws[curDraw];
+ const rs=rounds(dr);
+ if(curRound==null||!rs.includes(curRound)){curRound=rs.find(r=>dr.matches.some(m=>m.round===r&&(m.done||m.a.n!=="TBD")))||rs[0]||null;}
+ document.getElementById("drawchips").innerHTML=slam.draws.map((d,i)=>'<button class="chip'+(i===curDraw?" on":"")+'" data-d="'+i+'">'+esc(d.draw)+"</button>").join("");
+ document.getElementById("roundchips").innerHTML=rs.map(r=>'<button class="chip'+(r===curRound?" on":"")+'" data-r="'+esc(r)+'">'+esc(r)+"</button>").join("");
+ const ms=dr.matches.filter(m=>m.round===curRound);
+ document.getElementById("matches").innerHTML=ms.map(m=>{
+  const live=!m.done&&m.state&&!/scheduled/i.test(m.state);
+  const row=(p,o)=>'<div class="row'+(p.w?" w":"")+'"><span class="p">'+(p.w?"🏆 ":"")+esc(p.n)+'</span><span class="sets">'+ (m.a.s.length?p.s.join(" "):"") +"</span></div>";
+  return '<div class="match'+(live?" live":"")+'"><div class="who">'+row(m.a)+row(m.b)+'</div><div class="st">'+esc(m.done?"Completed":m.state||"Scheduled")+(m.date?"<br>"+new Date(m.date).toLocaleDateString(undefined,{month:"short",day:"numeric"}):"")+"</div></div>";
+ }).join("")||'<p class="note">No matches in this round yet.</p>';
+}
+document.addEventListener("click",e=>{
+ const d=e.target.closest("[data-d]");if(d){curDraw=+d.dataset.d;curRound=null;renderMatches();return;}
+ const r=e.target.closest("[data-r]");if(r){curRound=r.dataset.r;renderMatches();}
+});
+function renderChamps(slam){
+ const fin=[];
+ slam.draws.forEach(dr=>{const f=dr.matches.find(m=>m.done&&m.round==="Final");
+  if(f){const w=f.a.w?f.a:(f.b.w?f.b:null);if(w)fin.push({draw:dr.draw,name:w.n});}});
+ document.getElementById("champs").innerHTML=fin.length?'<div class="champ">🏆 <b>Champions:</b> '+fin.map(c=>esc(c.draw)+" — <b>"+esc(c.name)+"</b>").join(" · ")+"</div>":"";
+}
+function renderRanks(){
+ const R=DATA.rankings||{};
+ document.getElementById("ranks").innerHTML=["atp","wta"].map(t=>{
+  const rows=(R[t]||[]).map(x=>"<li><b>"+x.rank+"</b><span>"+esc(x.name)+"</span><i>"+x.points.toLocaleString()+" pts</i></li>").join("");
+  return '<div class="rank"><h3>'+t.toUpperCase()+" TOP 10</h3><ol>"+rows+"</ol></div>";
+ }).join("");
+}
+function renderHL(){
+ document.getElementById("hl").innerHTML=SLAMS.map(s=>'<a href="'+s.yt+'" target="_blank" rel="noopener">'+s.flag+" "+esc(s.name)+' highlights ↗<small>Official YouTube channel — full match highlights</small></a>').join("");
+}
+async function boot(){
+ renderCount();renderHL();
+  try{
+  const r=await fetch("data.json?t="+Date.now(),{cache:"no-store"});
+  if(r.ok){DATA=await r.json();
+   document.getElementById("upd").textContent="updated "+new Date(DATA.updated).toLocaleString();
+   if(DATA.slams.length){
+    document.getElementById("livewrap").style.display="";
+    document.getElementById("livehead").innerHTML="🎾 <b>"+esc(DATA.slams[0].name)+"</b> — every draw, every result";
+    renderChamps(DATA.slams[0]);renderMatches();
+   }
+   renderRanks();
+  }
+ }catch(e){}
+ renderSlams();
+}
+boot();
+</script>
+</body>
+</html>
