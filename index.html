@@ -81,6 +81,23 @@ h2 b{color:var(--acc)}
 .lb{position:fixed;inset:0;color:#fff;background:rgba(10,18,13,.85);display:flex;flex-direction:column;gap:12px;align-items:center;justify-content:center;z-index:50;cursor:zoom-out}
 .lb img{width:min(340px,78vw);aspect-ratio:1;object-fit:cover;border-radius:18px;background:var(--card);border:1px solid var(--line)}
 .lb .lbn{font-size:17px;font-weight:800}
+.avi{display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;color:#fff;background:#8fa596;cursor:default}
+.b-done{background:#e3efdd;color:var(--acc)}
+.slam.done{cursor:pointer}.slam.done:hover{border-color:var(--acc)}
+.edd{border-top:1px solid var(--line);padding:8px 0}
+.edd .edt{font-weight:800;font-size:13.5px;margin-bottom:2px}
+.edd .edl{font-size:13.5px;padding:2px 0;color:var(--text)}
+.edd .edl b{color:var(--muted);font-weight:700;font-size:11.5px;display:inline-block;min-width:26px}
+.edd .edl .sc{color:var(--muted);font-variant-numeric:tabular-nums}
+.hlgal{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px}
+.hcard{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px;cursor:pointer;text-align:left}
+.hcard:hover{border-color:var(--acc)}
+.hcard img{width:100%;aspect-ratio:16/9;object-fit:cover;border-radius:8px;background:#e7ece4}
+.hcard .hm{font-size:13px;margin-top:7px;font-weight:700}
+.hcard .hs{font-size:11.5px;color:var(--muted)}
+.hday{grid-column:1/-1;margin:8px 0 -4px;font-size:12.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--acc)}
+.vwrap{width:min(880px,94vw);aspect-ratio:16/9}
+.vwrap iframe{width:100%;height:100%;border:0;border-radius:12px;background:#000}
 .wtick{color:var(--acc);font-weight:800}
 .prob{color:var(--muted);font-size:12px;font-weight:700;font-variant-numeric:tabular-nums}
 .prob b{color:var(--acc)}
@@ -130,6 +147,7 @@ a{color:#256b46}
 
  <h2>The <b>four majors</b> — next editions</h2>
  <div class="slams" id="slams"></div>
+ <div id="edpanel"></div>
 
  <section id="livewrap" style="display:none">
   <h2 id="livehead"></h2>
@@ -157,6 +175,11 @@ a{color:#256b46}
  <h2>World <b>top 10</b></h2>
  <div class="ranks" id="ranks"></div>
 
+ <section id="hlgalwrap" style="display:none">
+  <h2>🎬 <b>Match highlights</b> — official clips, day by day</h2>
+  <div class="hlgal" id="hlgal"></div>
+ </section>
+
  <h2>Official <b>highlights</b></h2>
  <div class="hl" id="hl"></div>
  <p class="note">Official channels post full match highlights during each Slam. Finished singles matches above get a ▶ Highlights link automatically once the official clip is up.</p>
@@ -178,7 +201,9 @@ a{color:#256b46}
   with Polymarket.</p>
   <p><b>Privacy:</b> no cookies, no analytics, no ads, no accounts, no tracking of any kind.
   Your ⭐ follows and timezone choice are stored only in your own browser and never leave it.
-  The only external requests your browser makes are for those player photos.</p>
+  The only external requests your browser makes are for player photos (ESPN) and
+  highlight thumbnails (YouTube); a highlight video itself loads — via YouTube's
+  cookie-less embed domain — only when you tap play.</p>
   <p class="note">If you represent a rights holder and have a concern about anything shown
   here, please open an issue on the <a href="https://github.com/danpune/tennis-slams-tracker"
   target="_blank" rel="noopener">GitHub repository</a> — it will be addressed promptly.</p>
@@ -222,6 +247,13 @@ function renderSlams(){
  const now=Date.now();
  const nextMain=SLAMS.map(s=>nextEd(s)).filter(Boolean).map(e=>Date.parse(e.main)).filter(t=>t>now).sort()[0];
  document.getElementById("slams").innerHTML=SLAMS.map(s=>{
+  const done=EDITIONS.find(x=>normSlam(x.name)===normSlam(s.name)&&x.year===new Date().getFullYear());
+  if(done){
+   const champ=d=>{const dr=done.draws.find(x=>x.draw===d);const f=dr&&dr.matches.find(m=>m.done&&m.round==="Final");
+    if(!f)return null;const w=f.a.w?f.a:f.b;return w.n;};
+   const cm=champ("Men's Singles"),cw=champ("Women's Singles"),e2=nextEd(s);
+   return '<div class="slam done" data-ed="'+esc(done.year+"|"+done.name)+'"><div><span class="badge b-done">✓ Completed</span></div><div class="nm">'+s.flag+" "+esc(s.name)+" "+done.year+'</div><div class="meta">'+esc(s.venue)+" · "+s.surface+'</div><div class="dates">🏆 '+esc(cm||"")+(cw?" · "+esc(cw):"")+'</div><div class="note">Tap for winners &amp; results'+(e2?" · next: "+fmtD(e2.start)+" – "+fmtDY(e2.end):"")+"</div></div>";
+  }
   const e=nextEd(s);
   if(!e){const y=+s.eds[s.eds.length-1].label+1;
    return '<div class="slam"><div><span class="badge b-tba">DATES TBA</span></div><div class="nm">'+s.flag+" "+esc(s.name)+" "+y+'</div><div class="meta">'+esc(s.venue)+" · "+s.surface+'</div><div class="dates">Dates to be announced</div></div>';}
@@ -235,6 +267,8 @@ let FOLLOW={p:[],c:[]};
 try{FOLLOW=Object.assign(FOLLOW,JSON.parse(localStorage.getItem("gs_follow")||"{}"));}catch(e){}
 const saveF=()=>localStorage.setItem("gs_follow",JSON.stringify(FOLLOW));
 const isF=p=>FOLLOW.p.includes(p.n)||(p.c&&FOLLOW.c.includes(p.c));
+let EDITIONS=[];
+const normSlam=n=>String(n||"").toLowerCase().replace(/[^a-z]/g,"");
 let PLAYERS={},PIDX={}; /* name -> {n,c,cn} / name -> espn id, from rankings + draws */
 let COUNTRIES={}; /* code -> name */
 const COUNTRY_SEED={USA:"United States",IND:"India",GBR:"Great Britain",ESP:"Spain",ITA:"Italy",FRA:"France",GER:"Germany",SRB:"Serbia",RUS:"Russia",AUS:"Australia",CAN:"Canada",POL:"Poland",BLR:"Belarus",CZE:"Czechia",GRE:"Greece",NOR:"Norway",DEN:"Denmark",SUI:"Switzerland",AUT:"Austria",NED:"Netherlands",BEL:"Belgium",ARG:"Argentina",BRA:"Brazil",CHI:"Chile",JPN:"Japan",CHN:"China",KAZ:"Kazakhstan",TUN:"Tunisia",RSA:"South Africa",CRO:"Croatia",BUL:"Bulgaria",HUN:"Hungary",POR:"Portugal",SWE:"Sweden",FIN:"Finland",UKR:"Ukraine",ROU:"Romania",COL:"Colombia",MEX:"Mexico",KOR:"South Korea"};
@@ -270,6 +304,9 @@ document.addEventListener("click",e=>{
  const ac=e.target.closest("[data-addc]");if(ac){FOLLOW.c.push(ac.dataset.addc);saveF();renderMine();renderSugg(document.getElementById("fsearch").value);renderMatches();renderRanks();return;}
  const up=e.target.closest("[data-unp]");if(up){FOLLOW.p=FOLLOW.p.filter(x=>x!==up.dataset.unp);saveF();renderMine();renderMatches();renderRanks();return;}
  const uc=e.target.closest("[data-unc]");if(uc){FOLLOW.c=FOLLOW.c.filter(x=>x!==uc.dataset.unc);saveF();renderMine();renderMatches();renderRanks();return;}
+ const hc=e.target.closest("[data-yt]");if(hc){showVid(hc.dataset.yt,hc.dataset.lab);return;}
+ const ec=e.target.closest("[data-ed]");if(ec){const[y,n]=ec.dataset.ed.split("|");const ed=EDITIONS.find(x=>x.year===+y&&x.name===n);if(ed)renderEdition(ed);return;}
+ const ex=e.target.closest("[data-edx]");if(ex){document.getElementById("edpanel").innerHTML="";return;}
  const im=e.target.closest("img.av");if(im){showLB(im);return;}
  const pp=e.target.closest("[data-pp]");if(pp){showPath(pp.dataset.pp);return;}
  const px=e.target.closest("[data-ppx]");if(px){document.getElementById("path").innerHTML="";return;}
@@ -305,7 +342,10 @@ const roundOrder=["Final","Semifinal","Quarterfinal","Round 4","Round 3","Round 
 function rounds(dr){const rs=[...new Set(dr.matches.map(m=>m.round).filter(Boolean))];
  return rs.sort((a,b)=>{const ia=roundOrder.findIndex(r=>a.startsWith(r)),ib=roundOrder.findIndex(r=>b.startsWith(r));return (ia<0?99:ia)-(ib<0?99:ib);});}
 function sideFollowed(side){if(isF(side))return true;return (side.n||"").split(" / ").some(nm=>FOLLOW.p.includes(nm.trim()));}
-const av=p=>p&&p.i?'<img class="av" loading="lazy" src="https://a.espncdn.com/i/headshots/tennis/players/full/'+p.i+'.png" onerror="this.remove()" alt="'+esc(p.n||"")+'" title="'+esc(p.n||"")+'">':"";
+const avIni=n=>{const w=(n||"").split(" / ")[0].trim().split(/\s+/);return (((w[0]||"")[0]||"")+((w[w.length-1]||"")[0]||"")).toUpperCase();};
+const av=p=>{if(!p||(!p.i&&!p.n))return"";const ini=esc(avIni(p.n));
+ return p.i?'<img class="av" loading="lazy" src="https://a.espncdn.com/i/headshots/tennis/players/full/'+p.i+'.png" alt="'+esc(p.n||"")+'" title="'+esc(p.n||"")+'" data-ini="'+ini+'" onerror="this.replaceWith(Object.assign(document.createElement(&quot;span&quot;),{className:this.className+&quot; avi&quot;,textContent:this.dataset.ini}))">'
+  :'<span class="av avi">'+ini+"</span>";};
 function showLB(im){
  const d=document.createElement("div");d.className="lb";
  d.innerHTML='<img src="'+esc(im.src)+'" alt="">'+(im.alt?'<div class="lbn">'+esc(im.alt)+"</div>":"");
@@ -332,6 +372,49 @@ function showPath(name){
    return '<div class="pr"><b>'+esc(r.dr.replace(/^(Men's|Women's|Mixed) /,""))+" "+esc(r.m.round)+'</b><span class="wl '+wl+'">'+(wl||"·")+'</span><span class="op">vs '+av(r.opp)+esc(r.opp.n)+(r.opp.c?' <span class="cc">'+esc(r.opp.c)+"</span>":"")+(r.opp.r?' <span class="rk">#'+r.opp.r+"</span>":"")+'</span><span class="sc">'+esc(sc||(r.m.done?"":r.m.state||"Scheduled"))+"</span>"+hlnk(r.m)+"</div>";
   }).join("")+"</div>";
  el.scrollIntoView({behavior:"smooth",block:"nearest"});
+}
+function renderEdition(ed){
+ const slamMeta=SLAMS.find(s=>normSlam(s.name)===normSlam(ed.name));
+ const order=["Final","Semifinal","Quarterfinal"];
+ const draws=[...ed.draws].sort((a,b)=>(a.draw.includes("Singles")?0:1)-(b.draw.includes("Singles")?0:1));
+ document.getElementById("edpanel").innerHTML='<div class="path"><div class="pt"><span>'+(slamMeta?slamMeta.flag+" ":"")+esc(ed.name)+" "+ed.year+' — how it was won</span><button class="px" data-edx="1" title="Close">✕</button></div>'
+  +draws.map(dr=>{
+   const f=dr.matches.find(m=>m.done&&m.round==="Final");
+   const w=f?(f.a.w?f.a:f.b):null;
+   const lines=order.flatMap(r=>dr.matches.filter(m=>m.done&&m.round===r).map(m=>{
+    const win=m.a.w?m.a:m.b,los=win===m.a?m.b:m.a;
+    const sc=win.s.map((v,k)=>v+"-"+(los.s[k]??"")).join(" ");
+    return '<div class="edl"><b>'+{Final:"F",Semifinal:"SF",Quarterfinal:"QF"}[r]+"</b> "+esc(win.n)+" d. "+esc(los.n)+' <span class="sc">'+esc(sc)+"</span></div>";
+   }));
+   return '<div class="edd"><div class="edt">'+esc(dr.draw)+(w?" — 🏆 "+av(w)+esc(w.n):"")+"</div>"+lines.join("")+"</div>";
+  }).join("")+"</div>";
+ document.getElementById("edpanel").scrollIntoView({behavior:"smooth",block:"nearest"});
+}
+/* highlights gallery: every curated official clip, grouped by day, embedded on tap */
+function showVid(yt,label){
+ const d=document.createElement("div");d.className="lb";
+ d.innerHTML='<div class="vwrap"><iframe src="https://www.youtube-nocookie.com/embed/'+esc(yt)+'?autoplay=1" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen title="Match highlights"></iframe></div>'+(label?'<div class="lbn">'+esc(label)+"</div>":"");
+ d.addEventListener("click",e=>{if(e.target===d||e.target.classList.contains("lbn"))d.remove();});
+ document.body.appendChild(d);
+}
+function renderHLGal(){
+ const wrap=document.getElementById("hlgalwrap");
+ if(!DATA||!DATA.slams.length){wrap.style.display="none";return;}
+ const items=[];
+ DATA.slams[0].draws.forEach(dr=>dr.matches.forEach(m=>{
+  if(m.done&&HL[m.id])items.push({m,dr:dr.draw,yt:HL[m.id].yt});
+ }));
+ if(!items.length){wrap.style.display="none";return;}
+ items.sort((x,y)=>Date.parse(y.m.date)-Date.parse(x.m.date));
+ let lastDay="";
+ wrap.style.display="";
+ document.getElementById("hlgal").innerHTML=items.map(it=>{
+  const w=it.m.a.w?it.m.a:it.m.b,l=w===it.m.a?it.m.b:it.m.a;
+  const sc=w.s.map((v,k)=>v+"-"+(l.s[k]??"")).join(" ");
+  const day=new Date(it.m.date).toLocaleDateString(undefined,{weekday:"long",month:"short",day:"numeric",timeZone:effTz()});
+  const head=day!==lastDay?(lastDay=day,'<div class="hday">'+esc(day)+"</div>"):"";
+  return head+'<button class="hcard" data-yt="'+esc(it.yt)+'" data-lab="'+esc(w.n+" d. "+l.n)+'"><img loading="lazy" src="https://i.ytimg.com/vi/'+esc(it.yt)+'/hqdefault.jpg" alt=""><div class="hm">'+esc(w.n)+" d. "+esc(l.n)+'</div><div class="hs">'+esc(it.dr)+" · "+esc(it.m.round)+' · <span class="sc">'+esc(sc)+"</span></div></button>";
+ }).join("");
 }
 function renderMatches(){
  if(!DATA||!DATA.slams.length)return;
@@ -437,6 +520,7 @@ async function boot(){
  let champs=[];
  try{const r=await fetch("champions.json?t="+Date.now(),{cache:"no-store"});if(r.ok)champs=(await r.json()).champions||[];}catch(e){}
  try{const r=await fetch("highlights.json?t="+Date.now(),{cache:"no-store"});if(r.ok)HL=(await r.json()).highlights||{};}catch(e){}
+ try{const r=await fetch("editions.json?t="+Date.now(),{cache:"no-store"});if(r.ok){EDITIONS=(await r.json()).editions||[];renderSlams();}}catch(e){}
  try{
   const r=await fetch("data.json?t="+Date.now(),{cache:"no-store"});
   if(r.ok){DATA=await r.json();
@@ -446,7 +530,7 @@ async function boot(){
     document.getElementById("livewrap").style.display="";
     document.getElementById("livehead").innerHTML="🎾 <b>"+esc(DATA.slams[0].name)+"</b> — every draw, every result";
     document.getElementById("tzsel").value=TZ;document.getElementById("tzname").textContent=tzLabel();
-    renderBrief(DATA.slams[0]);renderChamps(DATA.slams[0]);renderMatches();
+    renderBrief(DATA.slams[0]);renderChamps(DATA.slams[0]);renderMatches();renderHLGal();
    }
    renderRanks();
   }

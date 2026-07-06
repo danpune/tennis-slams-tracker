@@ -34,6 +34,15 @@ World Cup one is dark; keep it that way).
   Merge-only, fail-safe; runs in CI after the fetch with `|| true` (ok if YouTube
   blocks runners — entries can also be filled by hand). Official handles verified:
   @AustralianOpen · @RolandGarros · @Wimbledon · @usopen.
+- `editions.json` — completed editions, QF onward, every draw (auto-captured by
+  fetch_data.update_editions when both singles finals are done; backfill past Slams
+  with `build_editions.py <YYYYMMDD final-weekend dates>` — ESPN scoreboard accepts
+  `?dates=` for historical snapshots). Powers the ✓ Completed four-majors cards
+  ("how it was won" panel) and backfilled 2026 AO/RG into champions.json.
+  NOTE: ESPN spells it "Roland Garros" (no hyphen) — match slams by normSlam().
+- Player photos: ESPN full-size headshots exist for only ~1/4 of draw players
+  (even top-10s like Muchova lack one) — av() falls back to an initials chip;
+  don't chase other photo sources.
 - `.github/workflows/update-data.yml` — every 30 min, SHA-pinned, rebase-before-push,
   fail-safe (never overwrites good data with an empty fetch).
 
@@ -57,6 +66,7 @@ ESPN: `https://site.api.espn.com/apis/site/v2/sports/tennis/{atp|wta}/{scoreboar
   (AO ausopen.com · RG rolandgarros.com · W wimbledon.com/en_GB/atoz/dates.html · USO usopen.org).
 
 ## Roadmap
-1. Draw bracket view (QF onward) — the worldcup2026 bracket tree is a good starting point.
+1. Draw bracket view (QF onward) — partially covered by the editions "how it was
+   won" panel; a visual tree is still open — the worldcup2026 bracket tree is a good starting point.
 2. Order-of-play "today" view during Slams (tennis has no fixed kickoff times).
 3. Extend `SLAMS[].eds` with 2028 dates when announced.

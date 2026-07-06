@@ -47,8 +47,8 @@ def competitor(x, rankmap):
         out["r"] = rankmap[out["i"]]   # current ATP/WTA world ranking
     return out
 
-def fetch_tour(tour, rankmap):
-    d = get(f"{BASE}/{tour}/scoreboard")
+def fetch_tour(tour, rankmap, dates=None):
+    d = get(f"{BASE}/{tour}/scoreboard" + (f"?dates={dates}" if dates else ""))
     events = []
     for e in d.get("events", []):
         if not e.get("major"):
@@ -134,6 +134,43 @@ def fetch_odds(slams):
                     tagged += 1
     return tagged
 
+ARCHIVE_ROUNDS = ("Quarterfinal", "Semifinal", "Final")
+
+def update_editions(slams):
+    """Archive a finished Slam's business end (QF/SF/F, every draw) into editions.json —
+    merge-only, keyed year|name. The live feed drops a Slam days after it ends; this is
+    how the four-majors cards can show completed editions' winners forever."""
+    path = "editions.json"
+    doc = {"note": "Completed editions, QF onward — captured automatically as each "
+                   "Slam finishes (backfillable via build_editions.py).", "editions": []}
+    if os.path.exists(path):
+        try:
+            doc = json.load(open(path, encoding="utf-8"))
+        except Exception:
+            pass
+    have = {(e["year"], e["name"]) for e in doc["editions"]}
+    added = 0
+    for s in slams:
+        year = int((s.get("start") or "0000")[:4])
+        if (year, s["name"]) in have:
+            continue
+        singles = [dr for dr in s["draws"] if "Singles" in dr["draw"]]
+        if not singles or not all(any(m["done"] and m["round"] == "Final"
+                                      for m in dr["matches"]) for dr in singles):
+            continue  # not finished yet
+        doc["editions"].append({
+            "year": year, "name": s["name"], "start": s.get("start", ""),
+            "end": s.get("end", ""), "venue": s.get("venue", ""),
+            "draws": [{"draw": dr["draw"],
+                       "matches": [m for m in dr["matches"] if m["round"] in ARCHIVE_ROUNDS]}
+                      for dr in s["draws"]]})
+        added += 1
+    if added:
+        doc["editions"].sort(key=lambda e: (-e["year"], e["name"]))
+        with open(path, "w", encoding="utf-8") as f:
+            json.dump(doc, f, ensure_ascii=False, separators=(",", ":"))
+    return added
+
 def update_champions(slams):
     """Merge completed finals into champions.json — append-only, keyed year|slam|draw."""
     path = "champions.json"
@@ -199,6 +236,7 @@ def main():
     with open("data.json", "w", encoding="utf-8") as f:
         json.dump(out, f, ensure_ascii=False, separators=(",", ":"))
     added = update_champions(out["slams"])
+    update_editions(out["slams"])
     nm = sum(len(dr["matches"]) for s in out["slams"] for dr in s["draws"])
     print(f"Wrote data.json ({len(out['slams'])} slam(s), {nm} matches, {odds} with odds) · "
           f"champions.json +{added} new")
