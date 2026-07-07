@@ -116,7 +116,7 @@ h2 b{color:var(--acc)}
 .prob b{color:var(--acc)}
 .dayhead{margin:20px 0 8px;font-size:13px;letter-spacing:.12em;text-transform:uppercase;color:var(--acc);border-bottom:1px solid var(--line);padding-bottom:4px}
 .rk{color:var(--muted);font-size:11px;border:1px solid var(--line);border-radius:5px;padding:0 4px;font-variant-numeric:tabular-nums;white-space:nowrap}
-.pn{cursor:pointer}.pn:hover{color:var(--acc);text-decoration:underline}
+.pn{cursor:pointer}.pn:hover,.pn:focus-visible{color:var(--acc);text-decoration:underline}
 .path{background:var(--card);border:1px solid var(--line);border-left:4px solid var(--star);border-radius:12px;padding:12px 16px;margin-bottom:10px}
 .path .pt{font-weight:800;font-size:15px;display:flex;justify-content:space-between;gap:10px;margin-bottom:6px}
 .path .px{background:none;border:0;color:var(--muted);font-size:16px;cursor:pointer}.path .px:hover{color:var(--text)}
@@ -266,7 +266,7 @@ function renderSlams(){
    const champ=d=>{const dr=done.draws.find(x=>x.draw===d);const f=dr&&dr.matches.find(m=>m.done&&m.round==="Final");
     if(!f)return null;const w=f.a.w?f.a:f.b;return w.n;};
    const cm=champ("Men's Singles"),cw=champ("Women's Singles"),e2=nextEd(s);
-   return '<div class="slam done" data-ed="'+esc(done.year+"|"+done.name)+'"><div><span class="badge b-done">✓ Completed</span></div><div class="nm">'+s.flag+" "+esc(s.name)+" "+done.year+'</div><div class="meta">'+esc(s.venue)+" · "+s.surface+'</div><div class="dates">🏆 '+esc(cm||"")+(cw?" · "+esc(cw):"")+'</div><div class="note">Tap for winners &amp; results'+(e2?" · next: "+fmtD(e2.start)+" – "+fmtDY(e2.end):"")+"</div></div>";
+   return '<div class="slam done" data-ed="'+esc(done.year+"|"+done.name)+'" role="button" tabindex="0"><div><span class="badge b-done">✓ Completed</span></div><div class="nm">'+s.flag+" "+esc(s.name)+" "+done.year+'</div><div class="meta">'+esc(s.venue)+" · "+s.surface+'</div><div class="dates">🏆 '+esc(cm||"")+(cw?" · "+esc(cw):"")+'</div><div class="note">Tap for winners &amp; results'+(e2?" · next: "+fmtD(e2.start)+" – "+fmtDY(e2.end):"")+"</div></div>";
   }
   const e=nextEd(s);
   if(!e){const y=+s.eds[s.eds.length-1].label+1;
@@ -328,6 +328,12 @@ document.addEventListener("click",e=>{
  const r=e.target.closest("[data-r]");if(r){curRound=r.dataset.r;renderMatches();return;}
  const f=e.target.closest("#folltog");if(f){follOnly=!follOnly;renderMatches();}
 });
+document.addEventListener("keydown",e=>{
+ if(e.key!=="Enter"&&e.key!==" ")return;
+ const t=e.target.closest("[data-pp],img.av,[data-ed]");
+ if(!t)return;
+ e.preventDefault();t.click();
+});
 /* ── timezone choice: your local zone vs the venue's ── */
 const localTZ=Intl.DateTimeFormat().resolvedOptions().timeZone||"UTC";
 const TZ_OPTS=[["__local__","your time ("+localTZ.split("/").pop().replace(/_/g," ")+")"],["__venue__","venue time"],
@@ -357,8 +363,8 @@ function rounds(dr){const rs=[...new Set(dr.matches.map(m=>m.round).filter(Boole
  return rs.sort((a,b)=>{const ia=roundOrder.findIndex(r=>a.startsWith(r)),ib=roundOrder.findIndex(r=>b.startsWith(r));return (ia<0?99:ia)-(ib<0?99:ib);});}
 function sideFollowed(side){if(isF(side))return true;return (side.n||"").split(" / ").some(nm=>FOLLOW.p.includes(nm.trim()));}
 const avIni=n=>{const w=(n||"").split(" / ")[0].trim().split(/\s+/);return (((w[0]||"")[0]||"")+((w[w.length-1]||"")[0]||"")).toUpperCase();};
-const av=p=>{if(!p||(!p.i&&!p.n))return"";const ini=esc(avIni(p.n));
- return p.i?'<img class="av" loading="lazy" src="https://a.espncdn.com/i/headshots/tennis/players/full/'+p.i+'.png" alt="'+esc(p.n||"")+'" title="'+esc(p.n||"")+'" data-ini="'+ini+'" onerror="this.replaceWith(Object.assign(document.createElement(&quot;span&quot;),{className:this.className+&quot; avi&quot;,textContent:this.dataset.ini}))">'
+const av=p=>{if(!p||!p.n||p.n==="TBD")return"";const ini=esc(avIni(p.n));
+ return p.i?'<img class="av" loading="lazy" src="https://a.espncdn.com/i/headshots/tennis/players/full/'+p.i+'.png" alt="'+esc(p.n||"")+'" title="'+esc(p.n||"")+'" data-ini="'+ini+'" role="button" tabindex="0" onerror="this.replaceWith(Object.assign(document.createElement(&quot;span&quot;),{className:this.className+&quot; avi&quot;,textContent:this.dataset.ini}))">'
   :'<span class="av avi">'+ini+"</span>";};
 function showLB(im){
  const d=document.createElement("div");d.className="lb";
@@ -450,7 +456,7 @@ function renderMatches(){
   let head="";
   if(isAll){const day=new Date(m.date).toLocaleDateString(undefined,{weekday:"long",month:"short",day:"numeric",timeZone:effTz()});
    if(day!==lastDay){lastDay=day;head='<div class="dayhead">'+esc(day)+"</div>";}}
-  const row=(p,prob)=>'<div class="row'+(p.w?" w":"")+'"><span class="p">'+av(p)+(sideFollowed(p)?'<span class="starmark">⭐ </span>':"")+(p.w?'<span class="wtick">✓</span> ':"")+(p.r?'<span class="rk">#'+p.r+"</span> ":"")+'<span class="pn" data-pp="'+esc(p.n)+'">'+esc(p.n)+"</span>"+(p.c?' <span class="cc">'+esc(p.c)+"</span>":"")+'</span>'+(p.s.length?'<span class="sets">'+p.s.join(" ")+"</span>":(prob!=null?'<span class="prob" title="Polymarket market price — informational, not betting advice">'+(prob>=.5?"<b>":"")+Math.round(prob*100)+"%"+(prob>=.5?"</b>":"")+"</span>":""))+"</div>";
+  const row=(p,prob)=>'<div class="row'+(p.w?" w":"")+'"><span class="p">'+av(p)+(sideFollowed(p)?'<span class="starmark">⭐ </span>':"")+(p.w?'<span class="wtick">✓</span> ':"")+(p.r?'<span class="rk">#'+p.r+"</span> ":"")+(p.n==="TBD"?esc(p.n):'<span class="pn" data-pp="'+esc(p.n)+'" role="button" tabindex="0">'+esc(p.n)+"</span>")+(p.c?' <span class="cc">'+esc(p.c)+"</span>":"")+'</span>'+(p.s.length?'<span class="sets">'+p.s.join(" ")+"</span>":(prob!=null?'<span class="prob" title="Polymarket market price — informational, not betting advice">'+(prob>=.5?"<b>":"")+Math.round(prob*100)+"%"+(prob>=.5?"</b>":"")+"</span>":""))+"</div>";
   const when=m.date?(m.done?new Date(m.date).toLocaleDateString(undefined,{month:"short",day:"numeric"}):fmtWhen(m.date)):"";
   const cal=(!m.done&&!live&&m.date&&m.a.n!=="TBD")?'<br><a class="mcal" target="_blank" rel="noopener" href="'+gcalM(m,slam)+'">📅 Gcal</a> <a class="mcal" href="'+icsM(m,slam)+'" download="match.ics">iCal</a>':"";
   return head+'<div class="match'+(live?" live":"")+'"><div class="who">'+row(m.a,!m.done&&m.o?m.o[0]:null)+row(m.b,!m.done&&m.o?m.o[1]:null)+'</div><div class="st">'+(m._draw?esc(m._draw)+" · ":"")+esc(m.round&&m._draw?m.round:(m.done?"Completed":m.state||"Scheduled"))+(when?"<br>"+when:"")+cal+(m.done&&HL[m.id]?"<br>"+hlnk(m):"")+"</div></div>";

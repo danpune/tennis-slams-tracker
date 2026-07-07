@@ -156,9 +156,11 @@ def update_editions(slams):
         year = int((s.get("start") or "0000")[:4])
         if (year, s["name"]) in have:
             continue
-        singles = [dr for dr in s["draws"] if "Singles" in dr["draw"]]
-        if not singles or not all(any(m["done"] and m["round"] == "Final"
-                                      for m in dr["matches"]) for dr in singles):
+        # require EVERY draw's final done, not just singles — some years a doubles/mixed
+        # final is scheduled after the men's singles final; archiving early would freeze
+        # that draw's edition permanently without its final (archives are one-shot)
+        if not s["draws"] or not all(any(m["done"] and m["round"] == "Final"
+                                         for m in dr["matches"]) for dr in s["draws"]):
             continue  # not finished yet
         doc["editions"].append({
             "year": year, "name": s["name"], "start": s.get("start", ""),
