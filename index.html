@@ -287,7 +287,7 @@ let PLAYERS={},PIDX={}; /* name -> {n,c,cn} / name -> espn id, from rankings + d
 let COUNTRIES={}; /* code -> name */
 const COUNTRY_SEED={USA:"United States",IND:"India",GBR:"Great Britain",ESP:"Spain",ITA:"Italy",FRA:"France",GER:"Germany",SRB:"Serbia",RUS:"Russia",AUS:"Australia",CAN:"Canada",POL:"Poland",BLR:"Belarus",CZE:"Czechia",GRE:"Greece",NOR:"Norway",DEN:"Denmark",SUI:"Switzerland",AUT:"Austria",NED:"Netherlands",BEL:"Belgium",ARG:"Argentina",BRA:"Brazil",CHI:"Chile",JPN:"Japan",CHN:"China",KAZ:"Kazakhstan",TUN:"Tunisia",RSA:"South Africa",CRO:"Croatia",BUL:"Bulgaria",HUN:"Hungary",POR:"Portugal",SWE:"Sweden",FIN:"Finland",UKR:"Ukraine",ROU:"Romania",COL:"Colombia",MEX:"Mexico",KOR:"South Korea"};
 function collectPlayers(){
- PLAYERS={};PIDX={};COUNTRIES=Object.assign({},COUNTRY_SEED);
+ PLAYERS={};PIDX={};COUNTRIES=Object.assign({},COUNTRY_SEED,DATA?.countries||{});
  const add=p=>{if(p&&p.n&&p.n!=="TBD"){PLAYERS[p.n]={n:p.n,c:p.c||"",cn:p.cn||""};if(p.i)PIDX[p.n]=p.i;if(p.c)COUNTRIES[p.c]=COUNTRIES[p.c]||p.cn||p.c;}};
  (DATA?.slams||[]).forEach(s=>s.draws.forEach(dr=>dr.matches.forEach(m=>{
    /* doubles teams arrive as "A / B" — index both halves too */
@@ -324,7 +324,7 @@ document.addEventListener("click",e=>{
  const im=e.target.closest("img.av");if(im){showLB(im);return;}
  const pp=e.target.closest("[data-pp]");if(pp){showPath(pp.dataset.pp);return;}
  const px=e.target.closest("[data-ppx]");if(px){document.getElementById("path").innerHTML="";return;}
- const d=e.target.closest("[data-d]");if(d){curDraw=d.dataset.d==="all"?"all":+d.dataset.d;curRound=null;renderMatches();return;}
+ const d=e.target.closest("[data-d]");if(d){curDraw=(d.dataset.d==="all"||d.dataset.d==="today")?d.dataset.d:+d.dataset.d;curRound=null;renderMatches();return;}
  const r=e.target.closest("[data-r]");if(r){curRound=r.dataset.r;renderMatches();return;}
  const f=e.target.closest("#folltog");if(f){follOnly=!follOnly;renderMatches();}
 });
@@ -346,6 +346,8 @@ if(!TZ_OPTS.some(o=>o[0]===TZ))TZ="__local__";
 document.getElementById("tzsel").innerHTML=TZ_OPTS.map(([v,l])=>'<option value="'+v+'">'+esc(l)+"</option>").join("");
 function curSlamTz(){const s=DATA&&DATA.slams[0]&&SLAMS.find(x=>x.name===DATA.slams[0].name);return s?s.tz:undefined;}
 function effTz(){return TZ==="__venue__"?(curSlamTz()||localTZ):(TZ==="__local__"?localTZ:TZ);}
+function venueDay(dateStr){return new Date(dateStr).toLocaleDateString("en-CA",{timeZone:curSlamTz()||localTZ});}
+function venueToday(){return venueDay(new Date().toISOString());}
 function fmtWhen(iso){if(!iso)return"";
  return new Date(iso).toLocaleString(undefined,{month:"short",day:"numeric",hour:"numeric",minute:"2-digit",timeZoneName:"short",timeZone:effTz()});}
 function tzLabel(){try{return "· "+new Intl.DateTimeFormat(undefined,{timeZoneName:"long",timeZone:effTz()}).formatToParts(new Date()).find(p=>p.type==="timeZoneName").value;}catch(e){return"";}}
@@ -438,15 +440,18 @@ function renderHLGal(){
 }
 function renderMatches(){
  if(!DATA||!DATA.slams.length)return;
- const slam=DATA.slams[0],isAll=curDraw==="all",dr=isAll?null:slam.draws[curDraw],rs=isAll?[]:rounds(dr);
- if(!isAll&&(curRound==null||!rs.includes(curRound))){curRound=rs.find(r=>dr.matches.some(m=>m.round===r&&(m.done||m.a.n!=="TBD")))||rs[0]||null;}
+ const slam=DATA.slams[0],isAll=curDraw==="all",isToday=curDraw==="today",dr=(isAll||isToday)?null:slam.draws[curDraw],rs=(isAll||isToday)?[]:rounds(dr);
+ if(!isAll&&!isToday&&(curRound==null||!rs.includes(curRound))){curRound=rs.find(r=>dr.matches.some(m=>m.round===r&&(m.done||m.a.n!=="TBD")))||rs[0]||null;}
  document.getElementById("drawchips").innerHTML=slam.draws.map((d,i)=>'<button class="chip'+(i===curDraw?" on":"")+'" data-d="'+i+'">'+esc(d.draw)+"</button>").join("")
+  +'<button class="chip'+(curDraw==="today"?" on":"")+'" data-d="today">🔴 Today\'s order of play</button>'
   +'<button class="chip'+(curDraw==="all"?" on":"")+'" data-d="all">📋 All days</button>'
   +'<button class="chip star'+(follOnly?" on":"")+'" id="folltog">⭐ Following</button>';
  document.getElementById("roundchips").innerHTML=rs.map(r=>'<button class="chip'+(r===curRound?" on":"")+'" data-r="'+esc(r)+'">'+esc(r)+"</button>").join("");
  let ms;
  if(follOnly){ms=slam.draws.flatMap(d2=>d2.matches.filter(m=>sideFollowed(m.a)||sideFollowed(m.b)).map(m=>({...m,_draw:d2.draw})));
   document.getElementById("roundchips").innerHTML='<p class="note">Showing every match involving your ⭐ players/countries, across all draws.</p>';}
+ else if(isToday){const vt=venueToday();ms=slam.draws.flatMap(d2=>d2.matches.filter(m=>m.date&&venueDay(m.date)===vt).map(m=>({...m,_draw:d2.draw}))).sort((x,y)=>Date.parse(x.date)-Date.parse(y.date));
+  document.getElementById("roundchips").innerHTML='<p class="note">Everything on the order of play for today ('+esc(vt)+', the tournament\'s own day) — across every draw, in your selected timezone.</p>';}
  else if(isAll){ms=slam.draws.flatMap(d2=>d2.matches.filter(m=>m.date).map(m=>({...m,_draw:d2.draw}))).sort((x,y)=>Date.parse(x.date)-Date.parse(y.date));
   document.getElementById("roundchips").innerHTML='<p class="note">The whole tournament, day by day — every draw, every round, in your selected timezone.</p>';}
  else ms=dr.matches.filter(m=>m.round===curRound);
@@ -459,8 +464,8 @@ function renderMatches(){
   const row=(p,prob)=>'<div class="row'+(p.w?" w":"")+'"><span class="p">'+av(p)+(sideFollowed(p)?'<span class="starmark">⭐ </span>':"")+(p.w?'<span class="wtick">✓</span> ':"")+(p.r?'<span class="rk">#'+p.r+"</span> ":"")+(p.n==="TBD"?esc(p.n):'<span class="pn" data-pp="'+esc(p.n)+'" role="button" tabindex="0">'+esc(p.n)+"</span>")+(p.c?' <span class="cc">'+esc(p.c)+"</span>":"")+'</span>'+(p.s.length?'<span class="sets">'+p.s.join(" ")+"</span>":(prob!=null?'<span class="prob" title="Polymarket market price — informational, not betting advice">'+(prob>=.5?"<b>":"")+Math.round(prob*100)+"%"+(prob>=.5?"</b>":"")+"</span>":""))+"</div>";
   const when=m.date?(m.done?new Date(m.date).toLocaleDateString(undefined,{month:"short",day:"numeric"}):fmtWhen(m.date)):"";
   const cal=(!m.done&&!live&&m.date&&m.a.n!=="TBD")?'<br><a class="mcal" target="_blank" rel="noopener" href="'+gcalM(m,slam)+'">📅 Gcal</a> <a class="mcal" href="'+icsM(m,slam)+'" download="match.ics">iCal</a>':"";
-  return head+'<div class="match'+(live?" live":"")+'"><div class="who">'+row(m.a,!m.done&&m.o?m.o[0]:null)+row(m.b,!m.done&&m.o?m.o[1]:null)+'</div><div class="st">'+(m._draw?esc(m._draw)+" · ":"")+esc(m.round&&m._draw?m.round:(m.done?"Completed":m.state||"Scheduled"))+(when?"<br>"+when:"")+cal+(m.done&&HL[m.id]?"<br>"+hlnk(m):"")+"</div></div>";
- }).join("")||'<p class="note">'+(follOnly?"None of your followed players/countries are in this Slam — add more above.":"No matches in this round yet.")+"</p>";
+  return head+'<div class="match'+(live?" live":"")+'"><div class="who">'+row(m.a,!m.done&&!live&&m.o?m.o[0]:null)+row(m.b,!m.done&&!live&&m.o?m.o[1]:null)+'</div><div class="st">'+(m._draw?esc(m._draw)+" · ":"")+esc(m.round&&m._draw?m.round:(m.done?"Completed":m.state||"Scheduled"))+(when?"<br>"+when:"")+cal+(m.done&&HL[m.id]?"<br>"+hlnk(m):"")+"</div></div>";
+ }).join("")||'<p class="note">'+(follOnly?"None of your followed players/countries are in this Slam — add more above.":(isToday?"No matches scheduled for today — rest day, or check back once play begins.":"No matches in this round yet."))+"</p>";
 }
 /* Catch-up brief: "haven't followed? here's where we are" — generated purely from the data */
 function renderBrief(slam){

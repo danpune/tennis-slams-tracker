@@ -136,6 +136,24 @@ def fetch_odds(slams):
                     tagged += 1
     return tagged
 
+def dedupe_countries(out):
+    """Move each side's full country name into one shared top-level table instead of
+    repeating it on every match/ranking entry (~1270 copies of ~60 distinct names)."""
+    countries = {}
+    def visit(obj):
+        if obj.get("c") and obj.get("cn"):
+            countries.setdefault(obj["c"], obj["cn"])
+        obj.pop("cn", None)
+    for s in out["slams"]:
+        for dr in s["draws"]:
+            for m in dr["matches"]:
+                visit(m["a"])
+                visit(m["b"])
+    for t in out["rankings"].values():
+        for x in t:
+            visit(x)
+    out["countries"] = countries
+
 ARCHIVE_ROUNDS = ("Quarterfinal", "Semifinal", "Final")
 
 def update_editions(slams):
@@ -237,6 +255,7 @@ def main():
     except Exception as e:
         odds = 0
         print(f"Odds fetch failed ({e}); continuing without.", file=sys.stderr)
+    dedupe_countries(out)
     with open("data.json", "w", encoding="utf-8") as f:
         json.dump(out, f, ensure_ascii=False, separators=(",", ":"))
     added = update_champions(out["slams"])
