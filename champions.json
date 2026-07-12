@@ -103,6 +103,15 @@
 {
 "year": 2026,
 "slam": "Wimbledon",
+"draw": "Men's Singles",
+"champion": "Jannik Sinner",
+"champC": "ITA",
+"runnerUp": "Alexander Zverev",
+"runnerC": "GER"
+},
+{
+"year": 2026,
+"slam": "Wimbledon",
 "draw": "Mixed Doubles",
 "champion": "M. Arevalo / J. Ostapenko",
 "champC": "",
