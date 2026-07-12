@@ -112,6 +112,15 @@
 {
 "year": 2026,
 "slam": "Wimbledon",
+"draw": "Women's Doubles",
+"champion": "H. Guo / K. Mladenovic",
+"champC": "",
+"runnerUp": "G. Dabrowski / L. Stefani",
+"runnerC": ""
+},
+{
+"year": 2026,
+"slam": "Wimbledon",
 "draw": "Women's Singles",
 "champion": "Linda Noskova",
 "champC": "CZE",
