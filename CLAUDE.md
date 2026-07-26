@@ -26,7 +26,11 @@ World Cup one is dark; keep it that way).
   sources (ESPN summary endpoint 404s for tennis) — don't fabricate one and append-only `champions.json` (evergreen roll
   of honour — the feed only carries current events, this file is the site's permanent
   memory; 2023–2025 singles seeded from public record).
-- `build_highlights.py` → `highlights.json` (ESPN match id → {yt}, singles only).
+- `build_highlights.py` → `highlights.json` (ESPN match id → {yt, w, l, sc, dr, rd, d, sl},
+  singles only). The match context is stored WITH the clip on purpose: the live feed drops
+  a Slam days after it ends, so without it the 🎬 gallery would go blank between
+  tournaments. Like champions.json, this file is the site's memory — renderHLGal()
+  prefers live match data when a Slam is running and falls back to the stored copy.
   Scrapes the Slam's official channel /videos page (ytInitialData → lockupViewModel),
   matches titles by both players' last names + "Highlights" (short-form preferred over
   "Extended"), verifies EVERY id via YouTube oEmbed: `author_url` must equal the

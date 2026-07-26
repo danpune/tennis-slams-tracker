@@ -1,101 +1,325 @@
 {
-"_howto": "Auto-filled by build_highlights.py: ESPN match id -> official YouTube highlight. Every entry is oEmbed-verified against the official channel's author_url. Manual entries welcome; merge-only.",
+"_howto": "Auto-filled by build_highlights.py: ESPN match id -> official YouTube highlight plus the match it describes (winner/loser/score/draw/round/date/slam), so the gallery survives after the live feed drops a Slam. Every clip is oEmbed-verified against the official channel's author_url. Manual entries welcome; merge-only.",
 "highlights": {
 "177476": {
-"yt": "TCQX_4D3cZ4"
+"yt": "TCQX_4D3cZ4",
+"w": "Jannik Sinner",
+"l": "Shintaro Mochizuki",
+"sc": "6-3 7-6 6-3",
+"dr": "Men's Singles",
+"rd": "Round 4",
+"d": "2026-07-05T18:20Z",
+"sl": "Wimbledon"
 },
 "177485": {
-"yt": "vOrKPuPncdg"
+"yt": "vOrKPuPncdg",
+"w": "Felix Auger-Aliassime",
+"l": "Alejandro Davidovich Fokina",
+"sc": "6-7 7-6 6-3 6-7 6-1",
+"dr": "Men's Singles",
+"rd": "Round 4",
+"d": "2026-07-05T14:45Z",
+"sl": "Wimbledon"
 },
 "177701": {
-"yt": "lJWV7n-Rd2Y"
+"yt": "lJWV7n-Rd2Y",
+"w": "Naomi Osaka",
+"l": "Aryna Sabalenka",
+"sc": "6-2 7-6",
+"dr": "Women's Singles",
+"rd": "Round 4",
+"d": "2026-07-05T16:30Z",
+"sl": "Wimbledon"
 },
 "177465": {
-"yt": "E7cBtW6Ii54"
+"yt": "E7cBtW6Ii54",
+"w": "Novak Djokovic",
+"l": "Roman Safiullin",
+"sc": "7-6 6-3 3-6 6-3",
+"dr": "Men's Singles",
+"rd": "Round 4",
+"d": "2026-07-05T12:40Z",
+"sl": "Wimbledon"
 },
 "177700": {
-"yt": "q9L9mYzfqiM"
+"yt": "q9L9mYzfqiM",
+"w": "Karolina Muchova",
+"l": "Barbora Krejcikova",
+"sc": "7-5 5-7 6-3",
+"dr": "Women's Singles",
+"rd": "Round 4",
+"d": "2026-07-05T12:40Z",
+"sl": "Wimbledon"
 },
 "177702": {
-"yt": "2NKPT58HvuI"
+"yt": "2NKPT58HvuI",
+"w": "Jessica Pegula",
+"l": "Iva Jovic",
+"sc": "4-6 6-3 6-1",
+"dr": "Women's Singles",
+"rd": "Round 4",
+"d": "2026-07-05T12:05Z",
+"sl": "Wimbledon"
 },
 "177708": {
-"yt": "KUVh-Jflv_Q"
+"yt": "KUVh-Jflv_Q",
+"w": "Alexandra Eala",
+"l": "Iga Swiatek",
+"sc": "7-6 6-2",
+"dr": "Women's Singles",
+"rd": "Round 3",
+"d": "2026-07-04T12:35Z",
+"sl": "Wimbledon"
 },
 "177464": {
-"yt": "wtnV7CLahnQ"
+"yt": "wtnV7CLahnQ",
+"w": "Alexander Bublik",
+"l": "Frances Tiafoe",
+"sc": "4-6 7-6 7-6 4-6 6-3",
+"dr": "Men's Singles",
+"rd": "Round 3",
+"d": "2026-07-04T17:15Z",
+"sl": "Wimbledon"
 },
 "177488": {
-"yt": "nfiugq425eI"
+"yt": "nfiugq425eI",
+"w": "Jan-Lennard Struff",
+"l": "Hubert Hurkacz",
+"sc": "3-6 6-7 7-6 7-5 4-2",
+"dr": "Men's Singles",
+"rd": "Round 4",
+"d": "2026-07-05T15:45Z",
+"sl": "Wimbledon"
 },
 "177623": {
-"yt": "8TIxftTTvQQ"
+"yt": "8TIxftTTvQQ",
+"w": "Coco Gauff",
+"l": "Belinda Bencic",
+"sc": "4-6 6-3 6-4",
+"dr": "Women's Singles",
+"rd": "Round 4",
+"d": "2026-07-05T19:35Z",
+"sl": "Wimbledon"
 },
 "177711": {
-"yt": "bKdThBmMWfk"
+"yt": "bKdThBmMWfk",
+"w": "Elise Mertens",
+"l": "Marie Bouzkova",
+"sc": "6-4 6-4",
+"dr": "Women's Singles",
+"rd": "Round 4",
+"d": "2026-07-06T11:50Z",
+"sl": "Wimbledon"
 },
 "177703": {
-"yt": "wALn4Ts3XzE"
+"yt": "wALn4Ts3XzE",
+"w": "Marta Kostyuk",
+"l": "Ashlyn Krueger",
+"sc": "6-4 6-4",
+"dr": "Women's Singles",
+"rd": "Round 4",
+"d": "2026-07-06T10:05Z",
+"sl": "Wimbledon"
 },
 "177687": {
-"yt": "ZsJYg7q0ZnM"
+"yt": "ZsJYg7q0ZnM",
+"w": "Jasmine Paolini",
+"l": "Alexandra Eala",
+"sc": "6-4 4-6 6-3",
+"dr": "Women's Singles",
+"rd": "Round 4",
+"d": "2026-07-06T12:35Z",
+"sl": "Wimbledon"
 },
 "177486": {
-"yt": "UtdkZ-J21Lw"
+"yt": "UtdkZ-J21Lw",
+"w": "Flavio Cobolli",
+"l": "Alex de Minaur",
+"sc": "7-5 7-6 6-3",
+"dr": "Men's Singles",
+"rd": "Round 4",
+"d": "2026-07-06T12:10Z",
+"sl": "Wimbledon"
 },
 "177704": {
-"yt": "5G_jd5r5EdM"
+"yt": "5G_jd5r5EdM",
+"w": "Linda Noskova",
+"l": "Madison Keys",
+"sc": "6-4 7-6",
+"dr": "Women's Singles",
+"rd": "Round 4",
+"d": "2026-07-06T15:10Z",
+"sl": "Wimbledon"
 },
 "177481": {
-"yt": "SRoRFAZr8h8"
+"yt": "SRoRFAZr8h8",
+"w": "Taylor Fritz",
+"l": "Alexander Bublik",
+"sc": "7-6 6-4 6-4",
+"dr": "Men's Singles",
+"rd": "Round 4",
+"d": "2026-07-06T17:10Z",
+"sl": "Wimbledon"
 },
 "177482": {
-"yt": "NEjdN4WT32g"
+"yt": "NEjdN4WT32g",
+"w": "Arthur Fery",
+"l": "Grigor Dimitrov",
+"sc": "7-5 3-6 4-6 6-4 7-6",
+"dr": "Men's Singles",
+"rd": "Round 4",
+"d": "2026-07-06T15:20Z",
+"sl": "Wimbledon"
 },
 "177483": {
-"yt": "zyU-KStIhAU"
+"yt": "zyU-KStIhAU",
+"w": "Jannik Sinner",
+"l": "Jan-Lennard Struff",
+"sc": "7-5 7-6 6-3",
+"dr": "Men's Singles",
+"rd": "Quarterfinal",
+"d": "2026-07-07T12:05Z",
+"sl": "Wimbledon"
 },
 "177714": {
-"yt": "2rtc9kSjmPM"
+"yt": "2rtc9kSjmPM",
+"w": "Coco Gauff",
+"l": "Jessica Pegula",
+"sc": "4-6 6-3 6-3",
+"dr": "Women's Singles",
+"rd": "Quarterfinal",
+"d": "2026-07-07T12:35Z",
+"sl": "Wimbledon"
 },
 "177484": {
-"yt": "FIzxSPYCFNY"
+"yt": "FIzxSPYCFNY",
+"w": "Alexander Zverev",
+"l": "Jiri Lehecka",
+"sc": "6-4 7-5 3-6 7-6",
+"dr": "Men's Singles",
+"rd": "Round 4",
+"d": "2026-07-07T14:55Z",
+"sl": "Wimbledon"
 },
 "177715": {
-"yt": "Un7JA9NRgYo"
+"yt": "Un7JA9NRgYo",
+"w": "Karolina Muchova",
+"l": "Naomi Osaka",
+"sc": "7-6 6-4",
+"dr": "Women's Singles",
+"rd": "Quarterfinal",
+"d": "2026-07-07T15:10Z",
+"sl": "Wimbledon"
 },
 "177493": {
-"yt": "axZBhY0QFEU"
+"yt": "axZBhY0QFEU",
+"w": "Novak Djokovic",
+"l": "Felix Auger-Aliassime",
+"sc": "7-6 3-6 6-3 6-7 7-6",
+"dr": "Men's Singles",
+"rd": "Quarterfinal",
+"d": "2026-07-07T16:35Z",
+"sl": "Wimbledon"
 },
 "177712": {
-"yt": "-JQ3WtVRIyw"
+"yt": "-JQ3WtVRIyw",
+"w": "Linda Noskova",
+"l": "Elise Mertens",
+"sc": "6-3 7-5",
+"dr": "Women's Singles",
+"rd": "Quarterfinal",
+"d": "2026-07-08T12:05Z",
+"sl": "Wimbledon"
 },
 "177705": {
-"yt": "5RcSB_5OYgQ"
+"yt": "5RcSB_5OYgQ",
+"w": "Marta Kostyuk",
+"l": "Jasmine Paolini",
+"sc": "6-3 6-2",
+"dr": "Women's Singles",
+"rd": "Quarterfinal",
+"d": "2026-07-08T12:35Z",
+"sl": "Wimbledon"
 },
 "177492": {
-"yt": "2oR5yi5qT0g"
+"yt": "2oR5yi5qT0g",
+"w": "Arthur Fery",
+"l": "Flavio Cobolli",
+"sc": "6-4 7-6 6-0",
+"dr": "Men's Singles",
+"rd": "Quarterfinal",
+"d": "2026-07-08T14:10Z",
+"sl": "Wimbledon"
 },
 "177494": {
-"yt": "DitMHeFxdoU"
+"yt": "DitMHeFxdoU",
+"w": "Alexander Zverev",
+"l": "Taylor Fritz",
+"sc": "6-4 6-4 6-2",
+"dr": "Men's Singles",
+"rd": "Quarterfinal",
+"d": "2026-07-08T14:25Z",
+"sl": "Wimbledon"
 },
 "177706": {
-"yt": "b9Cconn_1B4"
+"yt": "b9Cconn_1B4",
+"w": "Karolina Muchova",
+"l": "Coco Gauff",
+"sc": "6-2 1-6 7-6",
+"dr": "Women's Singles",
+"rd": "Semifinal",
+"d": "2026-07-09T12:35Z",
+"sl": "Wimbledon"
 },
 "177713": {
-"yt": "5J0aqAsLbCY"
+"yt": "5J0aqAsLbCY",
+"w": "Linda Noskova",
+"l": "Marta Kostyuk",
+"sc": "6-4 6-4",
+"dr": "Women's Singles",
+"rd": "Semifinal",
+"d": "2026-07-09T15:45Z",
+"sl": "Wimbledon"
 },
 "177489": {
-"yt": "cJK8Cpo4dU0"
+"yt": "cJK8Cpo4dU0",
+"w": "Alexander Zverev",
+"l": "Arthur Fery",
+"sc": "7-6 6-2 6-4",
+"dr": "Men's Singles",
+"rd": "Semifinal",
+"d": "2026-07-10T12:35Z",
+"sl": "Wimbledon"
 },
 "177490": {
-"yt": "N5OguIayQME"
+"yt": "N5OguIayQME",
+"w": "Jannik Sinner",
+"l": "Novak Djokovic",
+"sc": "6-4 6-4 6-4",
+"dr": "Men's Singles",
+"rd": "Semifinal",
+"d": "2026-07-10T15:20Z",
+"sl": "Wimbledon"
 },
 "177707": {
-"yt": "XfE9M6__724"
+"yt": "XfE9M6__724",
+"w": "Linda Noskova",
+"l": "Karolina Muchova",
+"sc": "6-2 5-7 6-3",
+"dr": "Women's Singles",
+"rd": "Final",
+"d": "2026-07-11T15:05Z",
+"sl": "Wimbledon"
 },
 "177491": {
-"yt": "8gIon03nzI0"
+"yt": "8gIon03nzI0",
+"w": "Jannik Sinner",
+"l": "Alexander Zverev",
+"sc": "6-7 7-6 6-3 6-4",
+"dr": "Men's Singles",
+"rd": "Final",
+"d": "2026-07-12T15:05Z",
+"sl": "Wimbledon"
 }
 }
 }

@@ -57,6 +57,16 @@ def channel_videos(handle):
     walk(json.loads(m.group(1)))
     return vids
 
+def entry(vid, slam_name, draw, m):
+    """A clip plus the match context it describes. The context is stored because the
+    live feed drops a Slam days after it ends — without it the gallery would go blank
+    between tournaments (highlights.json is the site's memory, same as champions.json)."""
+    win = m["a"] if m["a"]["w"] else m["b"]
+    los = m["b"] if win is m["a"] else m["a"]
+    return {"yt": vid, "w": win["n"], "l": los["n"],
+            "sc": " ".join(f"{a}-{b}" for a, b in zip(win["s"], los["s"])),
+            "dr": draw, "rd": m.get("round", ""), "d": m.get("date", ""), "sl": slam_name}
+
 def official(video_id, handle):
     """True iff YouTube oEmbed says this video belongs to the official channel."""
     try:
@@ -90,18 +100,18 @@ def main():
         except Exception as e:
             print(f"{slam['name']}: channel fetch failed ({e}); skipping.", file=sys.stderr)
             continue
-        pending = [m for d in slam["draws"] if "singles" in d["draw"].lower()
+        pending = [(d["draw"], m) for d in slam["draws"] if "singles" in d["draw"].lower()
                    for m in d["matches"]
                    if m["done"] and m.get("id") and m["id"] not in have]
         for vid, title in videos:  # newest first; plain 'Highlights' precedes 'Extended'
             t = norm(title)
-            hits = [m for m in pending
+            hits = [(draw, m) for draw, m in pending
                     if norm(m["a"]["n"]).split()[-1] in t and norm(m["b"]["n"]).split()[-1] in t]
             if len(hits) != 1:  # no match, or ambiguous — leave for a human
                 if len(hits) > 1:
                     print(f"ambiguous, skipped: {title}", file=sys.stderr)
                 continue
-            m = hits[0]
+            draw, m = hits[0]
             if "extended" in t and m["id"] in have:
                 continue  # already have the short-form clip
             if not official(vid, handle):
@@ -109,7 +119,7 @@ def main():
                 continue
             if m["id"] not in have:
                 added += 1
-            have[m["id"]] = {"yt": vid}
+            have[m["id"]] = entry(vid, slam["name"], draw, m)
     if added:
         with open(path, "w", encoding="utf-8") as f:
             json.dump(doc, f, ensure_ascii=False, indent=0)

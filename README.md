@@ -18,7 +18,7 @@ playbook (static page + scheduled fetch committing JSON snapshots), independent 
 |---|---|
 | 🗓️ **Four-majors cards** | Multi-year dates with auto-rollover; completed editions show their champions — tap for a full **"how it was won"** panel (QF → F, every draw, real scores) |
 | 🎾 **Live results** | All five draws with per-set scores, round chips, and a 📋 **All days** view — the whole tournament day by day |
-| ▶️ **Official highlights** | Every finished singles match links to the tournament's own YouTube clip, plus a day-by-day gallery with tap-to-play embeds |
+| ▶️ **Official highlights** | Every finished singles match links to the tournament's own YouTube clip, plus a day-by-day gallery with tap-to-play embeds — kept permanently, so past Slams stay watchable between tournaments |
 | 👤 **Players** | Photos (click to zoom), world ranking on every match row, and click any name for their **path through the Slam** |
 | 🕐 **Timezones & calendar** | See match times in your zone, the venue's, or a friend's; one-tap Google/iCal adds per match |
 | 📈 **Win odds** | Polymarket match-winner prices on upcoming matches (informational only, not betting advice) |
@@ -44,7 +44,7 @@ flowchart LR
         D["data.json<br/>(current Slam, live)"]
         C["champions.json<br/>(evergreen roll of honour)"]
         E["editions.json<br/>(completed Slams, QF→F)"]
-        HL["highlights.json<br/>(match → verified video id)"]
+        HL["highlights.json<br/>(verified clip + match context)"]
     end
 
     Pages["GitHub Pages<br/>index.html — one file,<br/>inline CSS + vanilla JS"]
