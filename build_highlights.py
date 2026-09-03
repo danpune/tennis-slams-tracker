@@ -57,6 +57,22 @@ def channel_videos(handle):
     walk(json.loads(m.group(1)))
     return vids
 
+def setstr(p, o):
+    """Per-set strings honouring tiebreaks — mirrors sets() in index.html so a stored
+    caption never disagrees with the page (a 10-6 match tiebreak is not '1-0')."""
+    out = []
+    for k, v in enumerate(p.get("s") or []):
+        t = (p.get("tb") or [None] * (k + 1))[k] if p.get("tb") else None
+        ot = (o.get("tb") or [None] * (k + 1))[k] if o.get("tb") else None
+        ov = (o.get("s") or [None] * (k + 1))[k] if o.get("s") else None
+        if t is None and ot is None:
+            out.append(str(v))
+        elif v <= 1 and (ov is None or ov <= 1):
+            out.append(str(t if t is not None else v))       # match tiebreak
+        else:
+            out.append(f"{v}({t})" if t is not None and ot is not None and t < ot else str(v))
+    return out
+
 def entry(vid, slam_name, draw, m):
     """A clip plus the match context it describes. The context is stored because the
     live feed drops a Slam days after it ends — without it the gallery would go blank
@@ -64,7 +80,7 @@ def entry(vid, slam_name, draw, m):
     win = m["a"] if m["a"]["w"] else m["b"]
     los = m["b"] if win is m["a"] else m["a"]
     return {"yt": vid, "w": win["n"], "l": los["n"],
-            "sc": " ".join(f"{a}-{b}" for a, b in zip(win["s"], los["s"])),
+            "sc": " ".join(f"{a}-{b}" for a, b in zip(setstr(win, los), setstr(los, win))),
             "dr": draw, "rd": m.get("round", ""), "d": m.get("date", ""), "sl": slam_name}
 
 def official(video_id, handle):
@@ -87,8 +103,11 @@ def main():
     if os.path.exists(path):
         try:
             doc = json.load(open(path, encoding="utf-8"))
-        except Exception:
-            pass
+            doc.setdefault("highlights", {})
+        except Exception as e:
+            # same rule as champions/editions: never rewrite an archive we cannot read
+            print(f"{path} unreadable ({e}); refusing to overwrite.", file=sys.stderr)
+            return
     have = doc["highlights"]
     added = 0
     for slam in data.get("slams", []):

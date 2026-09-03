@@ -24,20 +24,24 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: Fetch data from the ESPN public feed
-        run: python fetch_data.py
-
-      - name: Fill official highlights (fail-safe — merge-only, ok if YouTube blocks CI)
-        run: python build_highlights.py || true
-
-      - name: Commit if changed
+      # GitHub's scheduler drops most of our :07/:37 triggers under load — during the
+      # 2026 US Open it fired ~6x/day, leaving live scores 3-5h stale. So each run
+      # refreshes REPEATEDLY on a 12-min tick for ~48 min instead of once, and we only
+      # need the cron to land roughly hourly (which it does) for usable granularity.
+      - name: Refresh on a loop (fetch -> highlights -> commit, every 12 min)
         run: |
           git config user.name  "slam-bot"
           git config user.email "actions@users.noreply.github.com"
-          git add data.json champions.json highlights.json editions.json
-          git diff --staged --quiet || git commit -m "Update data $(date -u +%FT%TZ)"
-          git pull --rebase origin main
-          git push
+          for i in 1 2 3 4 5; do
+            [ $i -gt 1 ] && sleep 720
+            python fetch_data.py || echo "fetch failed on tick $i (data left untouched)"
+            python build_highlights.py || true
+            git add data.json champions.json highlights.json editions.json
+            if ! git diff --staged --quiet; then
+              git commit -m "Update data $(date -u +%FT%TZ)"
+              git pull --rebase origin main && git push || echo "push failed on tick $i; next tick retries"
+            fi
+          done
 
       # Kick the Wrexham tracker: its own schedule has never fired (new repo),
       # while this cron is proven. Entirely optional — with no secret set, or on

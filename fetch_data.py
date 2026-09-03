@@ -35,9 +35,14 @@ def competitor(x, rankmap):
     r = x.get("roster") or {}
     name = a.get("displayName") or r.get("shortDisplayName") or r.get("displayName") or "?"
     code, cname = country(a) if a else ("", "")
+    ls = x.get("linescores") or []
     out = {"n": name, "c": code, "cn": cname,
-           "s": [int(s.get("value", 0)) for s in (x.get("linescores") or [])],
+           "s": [int(s.get("value") or 0) for s in ls],
            "w": bool(x.get("winner"))}
+    # tiebreak points, when ESPN supplies them: a 7-6(5) set, or a match tiebreak
+    # decided 10-6, otherwise renders as "7-6" / "1-0" and reads as wrong data
+    if any(s.get("tiebreak") is not None for s in ls):
+        out["tb"] = [s.get("tiebreak") for s in ls]
     # player id (headshots live at a.espncdn.com/i/headshots/tennis/players/full/<id>.png)
     for l in a.get("links") or []:
         m = re.search(r"/id/(\d+)/", l.get("href", ""))
@@ -83,7 +88,7 @@ def fetch_rankings(tour):
         code, cname = country(a)
         out.append({"rank": int(x.get("current", 0)), "name": a.get("displayName", "?"),
                     "i": str(a.get("id", "")), "c": code, "cn": cname,
-                    "points": int(float(x.get("points", 0)))})
+                    "points": int(float(x.get("points") or 0))})
     return out
 
 def norm_name(s):
@@ -99,9 +104,9 @@ def fetch_odds(slams):
     for off in range(0, 500, 100):
         batch = get("https://gamma-api.polymarket.com/events"
                     f"?tag_slug=tennis&closed=false&limit=100&offset={off}")
-        if not batch:
-            break
         events += batch
+        if len(batch) < 100:
+            break
     marks = []
     for e in events:
         for mk in e.get("markets") or []:
@@ -166,8 +171,12 @@ def update_editions(slams):
     if os.path.exists(path):
         try:
             doc = json.load(open(path, encoding="utf-8"))
-        except Exception:
-            pass
+            doc.setdefault("editions", [])
+        except Exception as e:
+            # never rewrite an archive we could not read — that would drop history
+            # the live feed cannot give back (ESPN only carries current events)
+            print(f"{path} unreadable ({e}); refusing to overwrite.", file=sys.stderr)
+            return 0
     have = {(e["year"], e["name"]) for e in doc["editions"]}
     added = 0
     for s in slams:
@@ -201,8 +210,10 @@ def update_champions(slams):
     if os.path.exists(path):
         try:
             doc = json.load(open(path, encoding="utf-8"))
-        except Exception:
-            pass
+            doc.setdefault("champions", [])
+        except Exception as e:
+            print(f"{path} unreadable ({e}); refusing to overwrite.", file=sys.stderr)
+            return 0
     have = {(c["year"], c["slam"], c["draw"]) for c in doc["champions"]}
     added = 0
     for s in slams:
@@ -228,6 +239,20 @@ def update_champions(slams):
             json.dump(doc, f, ensure_ascii=False, indent=0)
     return added
 
+def stale_exit(hours=6):
+    """Exit code for a failed fetch: 0 while the served data is still fresh enough
+    (a blip), 1 once it is genuinely stale so the run goes red and CI notifies."""
+    try:
+        upd = json.load(open("data.json", encoding="utf-8"))["updated"]
+        age = (datetime.now(timezone.utc)
+               - datetime.strptime(upd, "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=timezone.utc))
+        if age.total_seconds() > hours * 3600:
+            print(f"data.json is {age} old; failing the run.", file=sys.stderr)
+            return 1
+    except Exception:
+        pass
+    return 0
+
 def main():
     out = {"updated": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
            "source": "ESPN (unofficial public feed)", "slams": [], "rankings": {}}
@@ -246,7 +271,7 @@ def main():
                 out["slams"].append(ev)
     except Exception as e:
         print(f"Fetch failed ({e}); leaving existing files untouched.", file=sys.stderr)
-        sys.exit(0)
+        sys.exit(stale_exit())
     if not out["rankings"].get("atp") and not out["slams"]:
         print("Empty result; leaving existing files untouched.", file=sys.stderr)
         sys.exit(0)
