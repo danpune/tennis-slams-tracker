@@ -516,7 +516,7 @@ function renderBrief(slam){
  const md=(SLAMS.find(x=>normSlam(x.name)===normSlam(slam.name))||{eds:[]}).eds
    .find(e=>Date.parse(e.end)+864e5>=start&&Date.parse(e.start)-864e5<=end);
  const mainStart=md?Date.parse(md.main+"T00:00:00Z"):start,mainEnd=md?Date.parse(md.end+"T00:00:00Z"):end;
- const day=Math.max(1,Math.floor((now-mainStart)/864e5)+1),total=Math.round((mainEnd-mainStart)/864e5)+1;
+ const total=Math.round((mainEnd-mainStart)/864e5)+1,day=Math.min(total,Math.max(1,Math.floor((now-mainStart)/864e5)+1));
  const lines=[];
  const short=nm=>nm.split(" / ").length>1?nm.split(" / ").map(x=>x.split(" ").pop()).join("/"):nm;
  slam.draws.forEach(dr=>{
