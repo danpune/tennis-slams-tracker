@@ -131,12 +131,11 @@ h2 b{color:var(--acc)}
 .rohc .who .av{width:26px;height:26px;margin-right:5px}
 @media (max-width:560px){.path .pr b{flex:0 0 100%;min-width:0}.path .pr{gap:4px 8px}
  .chip{padding:10px 15px}.mcal{padding:8px 10px;display:inline-block;margin-top:5px}.tzrow select{padding:8px 10px}
- /* names were ellipsing to "Danie..." — give the name the whole row and put the
-    score on its own right-aligned line, rather than three things fighting for 375px */
- .row{flex-wrap:wrap;row-gap:2px}
- .row .p{flex:1 1 100%}
- .row .sets,.row .prob{width:100%;text-align:right}
- .av{width:28px;height:28px;margin-right:6px}}
+ /* names were ellipsing to "Danie...": the name column is starved by the right-hand
+    metadata column (~57% of the card), not by the score — so wrap .st under the match
+    and leave each score on its own player's line */
+ .match{flex-wrap:wrap}
+ .match .st{flex:1 1 100%;text-align:left;margin-top:4px}}
 .ranks{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px}
 .rank{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:6px 16px 10px}
 .rank h3{font-size:13px;letter-spacing:.1em;color:var(--acc);margin:10px 0 6px}
@@ -506,7 +505,7 @@ function renderMatches(){
   const pa=!m.done&&!live&&m.o?Math.round(m.o[0]*100):null,P=pa==null?null:[pa,100-pa];  /* complement, so they sum to 100 */
   const when=m.date?(m.done?new Date(m.date).toLocaleDateString(undefined,{month:"short",day:"numeric"}):fmtWhen(m.date)):"";
   const cal=(!m.done&&!live&&m.date&&m.a.n!=="TBD"&&!timeTBD(m.date))?'<br><a class="mcal" target="_blank" rel="noopener" href="'+gcalM(m,slam)+'">📅 Gcal</a> <a class="mcal" href="'+icsM(m,slam)+'" download="'+esc((m.a.n+" v "+m.b.n).replace(/[^\w]+/g,"-"))+'.ics">iCal</a>':"";
-  return head+'<div class="match'+(live?" live":"")+'"><div class="who">'+row(m.a,P?P[0]:null,m.b)+row(m.b,P?P[1]:null,m.a)+'</div><div class="st">'+(m._draw?esc(m._draw)+" · ":"")+esc(m.round&&m._draw?m.round:(m.done?(retag(m)?m.state:"Completed"):m.state||"Scheduled"))+(when?"<br>"+when:"")+cal+(m.done&&HL[m.id]?"<br>"+hlnk(m):"")+"</div></div>";
+  return head+'<div class="match'+(live?" live":"")+'"><div class="who">'+row(m.a,P?P[0]:null,m.b)+row(m.b,P?P[1]:null,m.a)+'</div><div class="st">'+(m._draw?esc(m._draw)+" · ":"")+esc(m.round&&m._draw?m.round:(m.done?(retag(m)?m.state:"Completed"):m.state||"Scheduled"))+(m._draw?retag(m):"")+(when?"<br>"+when:"")+cal+(m.done&&HL[m.id]?"<br>"+hlnk(m):"")+"</div></div>";
  }).join("")||'<p class="note">'+(follOnly?"None of your followed players/countries are in this Slam — add more above.":(isToday?"No matches scheduled for today — rest day, or check back once play begins.":"No matches in this round yet."))+"</p>";
 }
 /* Catch-up brief: "haven't followed? here's where we are" — generated purely from the data */
@@ -516,7 +515,7 @@ function renderBrief(slam){
  if(!(now>=start-864e5&&now<=end+2*864e5)){el.style.display="none";return;}   /* only while the Slam runs */
  const md=(SLAMS.find(x=>normSlam(x.name)===normSlam(slam.name))||{eds:[]}).eds
    .find(e=>Date.parse(e.end)+864e5>=start&&Date.parse(e.start)-864e5<=end);
- const mainStart=md?Date.parse(md.main+"T00:00:00Z"):start,mainEnd=md?Date.parse(md.end+"T23:59:59Z"):end;
+ const mainStart=md?Date.parse(md.main+"T00:00:00Z"):start,mainEnd=md?Date.parse(md.end+"T00:00:00Z"):end;
  const day=Math.max(1,Math.floor((now-mainStart)/864e5)+1),total=Math.round((mainEnd-mainStart)/864e5)+1;
  const lines=[];
  const short=nm=>nm.split(" / ").length>1?nm.split(" / ").map(x=>x.split(" ").pop()).join("/"):nm;

@@ -32,9 +32,11 @@ jobs:
         run: |
           git config user.name  "slam-bot"
           git config user.email "actions@users.noreply.github.com"
+          FAIL=
           for i in 1 2 3 4 5; do
             [ $i -gt 1 ] && sleep 720
-            python fetch_data.py || echo "fetch failed on tick $i (data left untouched)"
+            # exits 1 only once data.json is genuinely stale (>6h); a blip exits 0
+            python fetch_data.py || { echo "fetch failed on tick $i (data left untouched)"; FAIL=1; }
             python build_highlights.py || true
             git add data.json champions.json highlights.json editions.json
             if ! git diff --staged --quiet; then
@@ -42,6 +44,7 @@ jobs:
               git pull --rebase origin main && git push || echo "push failed on tick $i; next tick retries"
             fi
           done
+          [ -z "$FAIL" ] || { echo "fetch reported stale data; failing the run so it is visible"; exit 1; }
 
       # Kick the Wrexham tracker: its own schedule has never fired (new repo),
       # while this cron is proven. Entirely optional — with no secret set, or on
