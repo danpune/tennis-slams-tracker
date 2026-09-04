@@ -129,7 +129,7 @@ h2 b{color:var(--acc)}
 .path .pr .wl{min-width:18px;font-weight:800}.path .pr .wl.W{color:var(--acc)}.path .pr .wl.L{color:#b23414}
 .path .pr .sc{font-variant-numeric:tabular-nums;color:var(--muted);white-space:nowrap}
 .rohc .who .av{width:26px;height:26px;margin-right:5px}
-@media (max-width:560px){.path .pr b{flex:0 0 100%;min-width:0}.path .pr{gap:4px 8px}
+@media (max-width:560px){ .path .pr b{flex:0 0 100%;min-width:0}.path .pr{gap:4px 8px}
  .chip{padding:10px 15px}.mcal{padding:8px 10px;display:inline-block;margin-top:5px}.tzrow select{padding:8px 10px}
  /* names were ellipsing to "Danie...": the name column is starved by the right-hand
     metadata column (~57% of the card), not by the score — so wrap .st under the match
@@ -163,10 +163,13 @@ a{color:#256b46}
 .brkcol{flex:1 1 0;min-width:158px;display:flex;flex-direction:column;justify-content:space-around;gap:8px}
 .brkh{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);font-weight:700;text-align:center}
 .brs{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:6px 9px;font-size:13px}
-.brs.pend{opacity:.6}
+.brs.pend{color:var(--muted);border-style:dashed}
 .brp{display:flex;justify-content:space-between;gap:8px;padding:1px 0}
 .brp.w{font-weight:800;color:#0d1f14}
 .brsc{color:var(--muted);font-variant-numeric:tabular-nums;white-space:nowrap}
+/* phone: narrow the columns so the Final column peeks in — that edge is the only
+   affordance telling you the bracket scrolls sideways */
+@media (max-width:560px){.brkcol{min-width:128px}.brs{padding:5px 7px;font-size:12.5px}}
 .stale{color:var(--live);font-weight:700}
 </style>
 </head>
@@ -211,7 +214,7 @@ a{color:#256b46}
  <div class="ranks" id="ranks"></div>
 
  <section id="hlgalwrap" style="display:none">
-  <h2>🎬 <b>Match highlights</b> — official clips, day by day</h2>
+  <h2>🎬 <b>Match highlights</b> — official clips</h2>
   <p class="note" id="hlnote" style="margin:-6px 0 12px"></p>
   <div class="hlgal" id="hlgal"></div>
  </section>
@@ -250,6 +253,7 @@ a{color:#256b46}
 </div>
 <script>
 "use strict";
+const isTBD=n=>/^TBD(\s*\/\s*TBD)?$/i.test(String(n||"").trim());
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 /* ── the four majors — editions with verified dates; unknown future years degrade to "dates TBA" ── */
 const SLAMS=[
@@ -316,7 +320,7 @@ let COUNTRIES={}; /* code -> name */
 const COUNTRY_SEED={USA:"United States",IND:"India",GBR:"Great Britain",ESP:"Spain",ITA:"Italy",FRA:"France",GER:"Germany",SER:"Serbia",RUS:"Russia",AUS:"Australia",CAN:"Canada",POL:"Poland",BLR:"Belarus",CZE:"Czechia",GRE:"Greece",NOR:"Norway",DEN:"Denmark",SUI:"Switzerland",AUT:"Austria",NED:"Netherlands",BEL:"Belgium",ARG:"Argentina",BRA:"Brazil",CHI:"Chile",JPN:"Japan",CHN:"China",KAZ:"Kazakhstan",TUN:"Tunisia",RSA:"South Africa",CRO:"Croatia",BUL:"Bulgaria",HUN:"Hungary",POR:"Portugal",SWE:"Sweden",FIN:"Finland",UKR:"Ukraine",ROM:"Romania",COL:"Colombia",MEX:"Mexico",KOR:"South Korea"};
 function collectPlayers(){
  PLAYERS={};PIDX={};COUNTRIES=Object.assign({},COUNTRY_SEED,DATA?.countries||{});
- const add=p=>{if(p&&p.n&&p.n!=="TBD"){PLAYERS[p.n]={n:p.n,c:p.c||"",cn:p.cn||""};if(p.i)PIDX[p.n]=p.i;if(p.c)COUNTRIES[p.c]=COUNTRIES[p.c]||p.cn||p.c;}};
+ const add=p=>{if(p&&p.n&&!isTBD(p.n)){PLAYERS[p.n]={n:p.n,c:p.c||"",cn:p.cn||""};if(p.i)PIDX[p.n]=p.i;if(p.c)COUNTRIES[p.c]=COUNTRIES[p.c]||p.cn||p.c;}};
  (DATA?.slams||[]).forEach(s=>s.draws.forEach(dr=>dr.matches.forEach(m=>{
    /* doubles teams arrive as "A / B" — index both halves too */
    [m.a,m.b].forEach(side=>{add(side);(side.n||"").split(" / ").forEach(nm=>{if(nm&&nm!==side.n)add({n:nm.trim(),c:side.c,cn:side.cn});});});
@@ -356,7 +360,7 @@ document.addEventListener("click",e=>{
  const px=e.target.closest("[data-ppx]");if(px){document.getElementById("path").innerHTML="";return;}
  const d=e.target.closest("[data-d]");if(d){curDraw=/^(all|today|brk)$/.test(d.dataset.d)?d.dataset.d:+d.dataset.d;curRound=null;renderMatches();return;}
  const r=e.target.closest("[data-r]");if(r){curRound=r.dataset.r;renderMatches();return;}
- const hm=e.target.closest("#hlmore");if(hm){HLALL=true;renderHLGal();return;}
+ const hm=e.target.closest("#hlmore");if(hm){HLALL=!HLALL;renderHLGal();return;}
  const f=e.target.closest("#folltog");if(f){follOnly=!follOnly;renderMatches();}
 });
 document.addEventListener("keydown",e=>{
@@ -404,7 +408,7 @@ const sets=(p,o)=>(p.s||[]).map((v,k)=>{
  return v+(t!=null&&ot!=null&&t<ot?"("+t+")":"");            /* regular set: annotate loser */
 });
 const avIni=n=>{const w=(n||"").split(" / ")[0].trim().split(/\s+/);return (((w[0]||"")[0]||"")+((w[w.length-1]||"")[0]||"")).toUpperCase();};
-const av=p=>{if(!p||!p.n||p.n==="TBD")return"";const ini=esc(avIni(p.n));
+const av=p=>{if(!p||!p.n||isTBD(p.n))return"";const ini=esc(avIni(p.n));
  return p.i?'<img class="av" loading="lazy" src="https://a.espncdn.com/i/headshots/tennis/players/full/'+esc(p.i)+'.png" alt="'+esc(p.n||"")+'" title="'+esc(p.n||"")+'" data-ini="'+ini+'" role="button" tabindex="0" onerror="this.replaceWith(Object.assign(document.createElement(&quot;span&quot;),{className:this.className+&quot; avi&quot;,textContent:this.dataset.ini}))">'
   :'<span class="av avi">'+ini+"</span>";};
 function dlg(d){ /* Escape must close any full-screen overlay we can open by keyboard */
@@ -471,6 +475,7 @@ function impact(it){let s=ROUNDW[it.rd]||0;
  const sets=String(it.sc||"").trim().split(/\s+/).filter(Boolean).length;
  if(sets>=5)s+=14;else if(sets>=4)s+=6;
  if(/\(/.test(it.sc||""))s+=4;                 /* went to a tiebreak */
+ if(DATA&&DATA.slams[0]&&it.sl===DATA.slams[0].name)s+=150;  /* the Slam being played leads */
  return s;}
 function renderHLGal(){
  const wrap=document.getElementById("hlgalwrap");
@@ -502,8 +507,8 @@ function renderHLGal(){
   const day=it.d?new Date(it.d).toLocaleDateString(undefined,{weekday:"long",month:"short",day:"numeric",timeZone:effTz()}):"";
   const lbl=[it.sl,day].filter(Boolean).join(" · ");
   const head=HLALL&&lbl&&lbl!==lastHead?(lastHead=lbl,'<div class="hday">'+esc(lbl)+"</div>"):"";
-  return head+'<button class="hcard" data-yt="'+esc(it.yt)+'" data-lab="'+esc(it.w+" d. "+it.l)+'"><img loading="lazy" src="https://i.ytimg.com/vi/'+esc(it.yt)+'/hqdefault.jpg" alt=""><div class="hm">'+esc(it.w)+" d. "+esc(it.l)+'</div><div class="hs">'+esc(it.dr)+" · "+esc(it.rd)+' · <span class="sc">'+esc(it.sc)+"</span></div></button>";
- }).join("")+(!HLALL&&all>24?'<button class="chip" id="hlmore" style="grid-column:1/-1;justify-self:start;margin-top:10px">Show all '+all+" clips</button>":"");
+  return head+'<button class="hcard" data-yt="'+esc(it.yt)+'" data-lab="'+esc(it.w+" d. "+it.l)+'"><img loading="lazy" src="https://i.ytimg.com/vi/'+esc(it.yt)+'/hqdefault.jpg" alt=""><div class="hm">'+esc(it.w)+" d. "+esc(it.l)+'</div><div class="hs">'+(it.sl?esc(it.sl)+" · ":"")+esc(it.dr)+" · "+esc(it.rd)+' · <span class="sc">'+esc(it.sc)+"</span></div></button>";
+ }).join("")+(all>24?'<button class="chip" id="hlmore" style="grid-column:1/-1;justify-self:start;margin-top:10px">'+(HLALL?"Show top 24":"Show all "+all+" clips")+"</button>":"");
 }
 /* show courts the way an order-of-play board does: show courts first, then by number */
 const COURT_TOP=["Arthur Ashe Stadium","Louis Armstrong Stadium","Grandstand","Stadium 17"];
@@ -518,15 +523,15 @@ function bracketHTML(dr){
  /* order the QFs so the two that feed a semi sit next to it — derived by matching
     players, never assumed from feed order */
  if(sf.length===2&&qf.length===4){
-  const feeds=(q,s)=>[s.a.n,s.b.n].some(n=>n!=="TBD"&&(n===q.a.n||n===q.b.n));
-  const ord=[];
-  sf.forEach(s=>qf.forEach(q=>{if(feeds(q,s)&&!ord.includes(q))ord.push(q);}));
-  qf.forEach(q=>{if(!ord.includes(q))ord.push(q);});
-  if(ord.length===4)qf=ord;
+  const feeds=(q,s)=>[s.a.n,s.b.n].some(n=>!isTBD(n)&&(n===q.a.n||n===q.b.n));
+  const slots=[null,null,null,null],used=[];
+  sf.forEach((s,si)=>{let k=0;qf.forEach(q=>{if(k<2&&!used.includes(q)&&feeds(q,s)){slots[si*2+k++]=q;used.push(q);}});});
+  const rest=qf.filter(q=>!used.includes(q));
+  qf=slots.map(x=>x||rest.shift());
  }
  const slot=m=>{
   if(!m)return BRK_EMPTY;
-  const side=(p,o)=>'<div class="brp'+(p.w?" w":"")+'"><span>'+(p.w?'<span class="wtick">✓</span> ':"")+esc(p.n)+'</span><span class="brsc">'+(p.s.length?sets(p,o).join(" "):"")+"</span></div>";
+  const side=(p,o)=>'<div class="brp'+(p.w?" w":"")+'"><span>'+(p.w?'<span class="wtick">✓</span> ':"")+esc(p.n)+'</span><span class="brsc">'+((p.s||[]).length?sets(p,o).join(" "):"")+"</span></div>";
   return '<div class="brs'+(m.done?"":" pend")+'">'+side(m.a,m.b)+side(m.b,m.a)+"</div>";
  };
  return '<div class="brk"><div class="brkcol"><div class="brkh">Quarterfinals</div>'
@@ -545,10 +550,12 @@ function renderMatches(){
   +'<button class="chip star'+(follOnly?" on":"")+'" id="folltog">⭐ Following</button>';
  document.getElementById("roundchips").innerHTML=rs.map(r=>'<button class="chip'+(r===curRound?" on":"")+'" data-r="'+esc(r)+'">'+esc(r)+"</button>").join("");
  if(isBrk){
-  document.getElementById("roundchips").innerHTML='<p class="note">How the singles draws finish — quarterfinals onward, filling in as they are played. Scroll sideways on a narrow screen.</p>';
-  document.getElementById("matches").innerHTML=slam.draws.filter(d=>d.draw.includes("Singles"))
+  document.getElementById("roundchips").innerHTML='<p class="note">Quarterfinals onward — each draw appears here once its quarterfinal line-up is known, and fills in as it is played. Scroll sideways on a narrow screen.</p>';
+  /* only draws that actually have a name in them — an all-TBD skeleton is noise */
+  const started=slam.draws.filter(d=>d.matches.some(m=>/^(Quarterfinal|Semifinal|Final)$/.test(m.round)&&(m.done||!isTBD(m.a.n))));
+  document.getElementById("matches").innerHTML=started
    .map(d=>{const b=bracketHTML(d);return b?'<h3 class="brkt">'+esc(d.draw)+"</h3>"+b:"";}).join("")
-   ||'<p class="note">The bracket appears once the quarterfinal line-up is drawn.</p>';
+   ||'<p class="note">No bracket yet — it appears here as soon as a quarterfinal line-up is drawn.</p>';
   return;
  }
  let ms;
@@ -564,14 +571,14 @@ function renderMatches(){
  document.getElementById("matches").innerHTML=ms.map(m=>{
   const live=!m.done&&m.state&&!/scheduled/i.test(m.state);
   let head="";
-  if(isAll){const day=new Date(m.date).toLocaleDateString(undefined,{weekday:"long",month:"short",day:"numeric",timeZone:timeTBD(m.date)?(curSlamTz()||effTz()):effTz()});
+  if(isAll&&!follOnly){const day=new Date(m.date).toLocaleDateString(undefined,{weekday:"long",month:"short",day:"numeric",timeZone:timeTBD(m.date)?(curSlamTz()||effTz()):effTz()});
    if(day!==lastDay){lastDay=day;head='<div class="dayhead">'+esc(day)+"</div>";}}
-  if(isToday){const ct=m.ct||"Court TBA";
+  if(isToday&&!follOnly){const ct=m.ct||"Court TBA";
    if(ct!==lastDay){lastDay=ct;head='<div class="courthead">'+esc(ct)+"</div>";}}
-  const row=(p,prob,opp)=>'<div class="row'+(p.w?" w":"")+'"><span class="p">'+av(p)+(sideFollowed(p)?'<span class="starmark">⭐ </span>':"")+(p.w?'<span class="wtick">✓</span> ':"")+(p.r?'<span class="rk">#'+p.r+"</span> ":"")+(p.n==="TBD"?esc(p.n):'<span class="pn" data-pp="'+esc(p.n)+'" role="button" tabindex="0">'+esc(p.n)+"</span>")+(p.c?' <span class="cc">'+esc(p.c)+"</span>":"")+'</span>'+(p.s.length?'<span class="sets">'+sets(p,opp).join(" ")+"</span>":(prob!=null?'<span class="prob" title="Polymarket market price — informational, not betting advice">'+(prob>=50?"<b>":"")+prob+"%"+(prob>=50?"</b>":"")+"</span>":""))+"</div>";
+  const row=(p,prob,opp)=>'<div class="row'+(p.w?" w":"")+'"><span class="p">'+av(p)+(sideFollowed(p)?'<span class="starmark">⭐ </span>':"")+(p.w?'<span class="wtick">✓</span> ':"")+(p.r?'<span class="rk">#'+p.r+"</span> ":"")+(isTBD(p.n)?esc(p.n):'<span class="pn" data-pp="'+esc(p.n)+'" role="button" tabindex="0">'+esc(p.n)+"</span>")+(p.c?' <span class="cc">'+esc(p.c)+"</span>":"")+'</span>'+(p.s.length?'<span class="sets">'+sets(p,opp).join(" ")+"</span>":(prob!=null?'<span class="prob" title="Polymarket market price — informational, not betting advice">'+(prob>=50?"<b>":"")+prob+"%"+(prob>=50?"</b>":"")+"</span>":""))+"</div>";
   const pa=!m.done&&!live&&m.o?Math.round(m.o[0]*100):null,P=pa==null?null:[pa,100-pa];  /* complement, so they sum to 100 */
   const when=m.date?(m.done?new Date(m.date).toLocaleDateString(undefined,{month:"short",day:"numeric"}):fmtWhen(m.date)):"";
-  const cal=(!m.done&&!live&&m.date&&m.a.n!=="TBD"&&!timeTBD(m.date))?'<br><a class="mcal" target="_blank" rel="noopener" href="'+gcalM(m,slam)+'">📅 Gcal</a> <a class="mcal" href="'+icsM(m,slam)+'" download="'+esc((m.a.n+" v "+m.b.n).replace(/[^\w]+/g,"-"))+'.ics">iCal</a>':"";
+  const cal=(!m.done&&!live&&m.date&&!isTBD(m.a.n)&&!timeTBD(m.date))?'<br><a class="mcal" target="_blank" rel="noopener" href="'+gcalM(m,slam)+'">📅 Gcal</a> <a class="mcal" href="'+icsM(m,slam)+'" download="'+esc((m.a.n+" v "+m.b.n).replace(/[^\w]+/g,"-"))+'.ics">iCal</a>':"";
   return head+'<div class="match'+(live?" live":"")+'"><div class="who">'+row(m.a,P?P[0]:null,m.b)+row(m.b,P?P[1]:null,m.a)+'</div><div class="st">'+(m._draw?esc(m._draw)+" · ":"")+esc(m.round&&m._draw?m.round:(m.done?(retag(m)?m.state:"Completed"):m.state||"Scheduled"))+(m._draw?retag(m):"")+(when?"<br>"+when:"")+(m.ct?'<br><span class="ct">'+esc(m.ct)+"</span>":"")+(m.tv&&!m.done?'<span class="tv">'+esc(m.tv)+"</span>":"")+cal+(m.done&&HL[m.id]?"<br>"+hlnk(m):"")+"</div></div>";
  }).join("")||'<p class="note">'+(follOnly?"None of your followed players/countries are in this Slam — add more above.":(isToday?"No matches scheduled for today — rest day, or check back once play begins.":"No matches in this round yet."))+"</p>";
 }
@@ -591,9 +598,9 @@ function renderBrief(slam){
   const fin=ms.find(m=>m.done&&m.round==="Final");
   if(fin){const w=fin.a.w?fin.a:fin.b,l=w===fin.a?fin.b:fin.a;
    lines.push('<div class="bl">🏆 <b>'+esc(dr.draw)+'</b> — champion: <b>'+esc(w.n)+'</b> <span class="dim">beat '+esc(l.n)+"</span></div>");return;}
-  const live=ms.filter(m=>!m.done&&m.state&&!/sched/i.test(m.state)&&m.a.n!=="TBD");
+  const live=ms.filter(m=>!m.done&&m.state&&!/sched/i.test(m.state)&&!isTBD(m.a.n));
   if(live.length){lines.push('<div class="bl">🔴 <b>'+esc(dr.draw)+"</b> — "+esc(live[0].round)+" in progress: "+esc(short(live[0].a.n))+" v "+esc(short(live[0].b.n))+"</div>");return;}
-  const pend=roundOrder.map(r=>ms.filter(m=>m.round===r&&!m.done&&m.a.n!=="TBD")).find(x=>x.length);
+  const pend=roundOrder.map(r=>ms.filter(m=>m.round===r&&!m.done&&!isTBD(m.a.n)&&!isTBD(m.b.n))).find(x=>x.length);
   if(pend&&pend.length){const dt=pend[0].date?new Date(pend[0].date).toLocaleDateString(undefined,{weekday:"short",month:"short",day:"numeric"}):"";
    lines.push('<div class="bl">▶ <b>'+esc(dr.draw)+"</b> — next: "+esc(pend[0].round)+(dt?' <span class="dim">('+dt+")</span>":"")+": "+pend.slice(0,2).map(m=>esc(short(m.a.n))+" v "+esc(short(m.b.n))).join(" · ")+"</div>");return;}
   const done=roundOrder.find(r=>ms.some(m=>m.round===r&&m.done));
