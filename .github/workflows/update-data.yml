@@ -46,18 +46,3 @@ jobs:
             fi
           done
           [ -z "$FAIL" ] || { echo "fetch reported stale data; failing the run so it is visible"; exit 1; }
-
-      # Kick the Wrexham tracker: its own schedule has never fired (new repo),
-      # while this cron is proven. Entirely optional — with no secret set, or on
-      # any failure, this exits 0 and the Slam job is unaffected.
-      - name: Ping wrexham-tracker
-        continue-on-error: true
-        env:
-          TOKEN: ${{ secrets.WXM_DISPATCH }}
-        run: |
-          [ -n "$TOKEN" ] || { echo "no WXM_DISPATCH secret; skipping"; exit 0; }
-          curl -sS -X POST \
-            -H "Authorization: Bearer $TOKEN" \
-            -H "Accept: application/vnd.github+json" \
-            https://api.github.com/repos/danpune/wrexham-tracker/dispatches \
-            -d '{"event_type":"refresh"}' || true
