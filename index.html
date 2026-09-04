@@ -155,6 +155,9 @@ footer{margin:44px 0 26px;padding-top:14px;border-top:1px solid var(--line);colo
 .about p{margin:11px 0}.about b{color:var(--text)}
 a{color:#256b46}
 .hlnk{font-size:11.5px;text-decoration:none;white-space:nowrap}
+.ct{color:var(--text);font-weight:700}
+.tv{border:1px solid var(--line);border-radius:4px;padding:0 4px;margin-left:4px;white-space:nowrap}
+.courthead{margin:18px 0 8px;font-size:13px;font-weight:800;color:var(--acc);border-bottom:1px solid var(--line);padding-bottom:4px}
 .stale{color:var(--live);font-weight:700}
 </style>
 </head>
@@ -168,7 +171,7 @@ a{color:#256b46}
 
  <div class="count" id="count"></div>
 
- <h2>The <b>four majors</b> — next editions</h2>
+ <h2 id="majorshead">The <b>four majors</b> — next editions</h2>
  <div class="slams" id="slams"></div>
  <div id="edpanel"></div>
 
@@ -200,6 +203,7 @@ a{color:#256b46}
 
  <section id="hlgalwrap" style="display:none">
   <h2>🎬 <b>Match highlights</b> — official clips, day by day</h2>
+  <p class="note" id="hlnote" style="margin:-6px 0 12px"></p>
   <div class="hlgal" id="hlgal"></div>
  </section>
 
@@ -451,6 +455,14 @@ function showVid(yt,label){
  d.addEventListener("click",e=>{if(e.target===d||e.target.classList.contains("lbn"))d.remove();});
  dlg(d);
 }
+/* how much a clip is worth showing: how deep the round was, plus how hard it was
+   fought. Both come straight from the stored result — nothing invented. */
+const ROUNDW={"Final":100,"Semifinal":80,"Quarterfinal":60,"Round 4":42,"Round 3":30,"Round 2":20,"Round 1":10};
+function impact(it){let s=ROUNDW[it.rd]||0;
+ const sets=String(it.sc||"").trim().split(/\s+/).filter(Boolean).length;
+ if(sets>=5)s+=14;else if(sets>=4)s+=6;
+ if(/\(/.test(it.sc||""))s+=4;                 /* went to a tiebreak */
+ return s;}
 function renderHLGal(){
  const wrap=document.getElementById("hlgalwrap");
  /* live matches give the freshest context; highlights.json carries its own copy so the
@@ -467,17 +479,27 @@ function renderHLGal(){
  }).filter(Boolean);
  if(!items.length){wrap.style.display="none";return;}
  wrap.style.display="";
- items.sort((x,y)=>(Date.parse(y.d)||0)-(Date.parse(x.d)||0));
  const all=items.length;
- if(!HLALL&&all>24)items=items.slice(0,24);
+ if(HLALL){items.sort((x,y)=>(Date.parse(y.d)||0)-(Date.parse(x.d)||0));}
+ else{ /* default view ranks by what actually mattered, so a final never sits below a
+          first-round qualifier just because it is older */
+  items.sort((x,y)=>impact(y)-impact(x)||(Date.parse(y.d)||0)-(Date.parse(x.d)||0));
+  if(all>24)items=items.slice(0,24);}
+ document.getElementById("hlnote").textContent=HLALL
+  ?"Every clip we have, newest first — "+all+" matches across recent Slams."
+  :"The matches that mattered most, from "+all+" official clips. Tap any card to play.";
  let lastHead="";
  document.getElementById("hlgal").innerHTML=items.map(it=>{
   const day=it.d?new Date(it.d).toLocaleDateString(undefined,{weekday:"long",month:"short",day:"numeric",timeZone:effTz()}):"";
   const lbl=[it.sl,day].filter(Boolean).join(" · ");
-  const head=lbl&&lbl!==lastHead?(lastHead=lbl,'<div class="hday">'+esc(lbl)+"</div>"):"";
+  const head=HLALL&&lbl&&lbl!==lastHead?(lastHead=lbl,'<div class="hday">'+esc(lbl)+"</div>"):"";
   return head+'<button class="hcard" data-yt="'+esc(it.yt)+'" data-lab="'+esc(it.w+" d. "+it.l)+'"><img loading="lazy" src="https://i.ytimg.com/vi/'+esc(it.yt)+'/hqdefault.jpg" alt=""><div class="hm">'+esc(it.w)+" d. "+esc(it.l)+'</div><div class="hs">'+esc(it.dr)+" · "+esc(it.rd)+' · <span class="sc">'+esc(it.sc)+"</span></div></button>";
  }).join("")+(!HLALL&&all>24?'<button class="chip" id="hlmore" style="grid-column:1/-1;justify-self:start;margin-top:10px">Show all '+all+" clips</button>":"");
 }
+/* show courts the way an order-of-play board does: show courts first, then by number */
+const COURT_TOP=["Arthur Ashe Stadium","Louis Armstrong Stadium","Grandstand","Stadium 17"];
+function courtRank(c){if(!c)return 9999;const i=COURT_TOP.indexOf(c);if(i>=0)return i;
+ const n=String(c).match(/\d+/);return n?100+ +n[0]:500;}
 function renderMatches(){
  if(!DATA||!DATA.slams.length)return;
  const slam=DATA.slams[0],isAll=curDraw==="all",isToday=curDraw==="today",dr=(isAll||isToday)?null:slam.draws[curDraw],rs=(isAll||isToday)?[]:rounds(dr);
@@ -490,8 +512,9 @@ function renderMatches(){
  let ms;
  if(follOnly){ms=slam.draws.flatMap(d2=>d2.matches.filter(m=>sideFollowed(m.a)||sideFollowed(m.b)).map(m=>({...m,_draw:d2.draw})));
   document.getElementById("roundchips").innerHTML='<p class="note">Showing every match involving your ⭐ players/countries, across all draws.</p>';}
- else if(isToday){const vt=venueToday();ms=slam.draws.flatMap(d2=>d2.matches.filter(m=>m.date&&venueDay(m.date)===vt).map(m=>({...m,_draw:d2.draw}))).sort((x,y)=>Date.parse(x.date)-Date.parse(y.date));
-  document.getElementById("roundchips").innerHTML='<p class="note">Everything on the order of play for today ('+esc(vt)+', the tournament\'s own day) — across every draw, in your selected timezone.</p>';}
+ else if(isToday){const vt=venueToday();ms=slam.draws.flatMap(d2=>d2.matches.filter(m=>m.date&&venueDay(m.date)===vt).map(m=>({...m,_draw:d2.draw})))
+   .sort((x,y)=>courtRank(x.ct)-courtRank(y.ct)||Date.parse(x.date)-Date.parse(y.date));
+  document.getElementById("roundchips").innerHTML='<p class="note">The order of play for today ('+esc(vt)+', the tournament\'s own day) — by court, in playing order, across every draw.</p>';}
  else if(isAll){ms=slam.draws.flatMap(d2=>d2.matches.filter(m=>m.date).map(m=>({...m,_draw:d2.draw}))).sort((x,y)=>Date.parse(x.date)-Date.parse(y.date));
   document.getElementById("roundchips").innerHTML='<p class="note">The whole tournament, day by day — every draw, every round, in your selected timezone.</p>';}
  else ms=dr.matches.filter(m=>m.round===curRound);
@@ -501,11 +524,13 @@ function renderMatches(){
   let head="";
   if(isAll){const day=new Date(m.date).toLocaleDateString(undefined,{weekday:"long",month:"short",day:"numeric",timeZone:timeTBD(m.date)?(curSlamTz()||effTz()):effTz()});
    if(day!==lastDay){lastDay=day;head='<div class="dayhead">'+esc(day)+"</div>";}}
+  if(isToday){const ct=m.ct||"Court TBA";
+   if(ct!==lastDay){lastDay=ct;head='<div class="courthead">'+esc(ct)+"</div>";}}
   const row=(p,prob,opp)=>'<div class="row'+(p.w?" w":"")+'"><span class="p">'+av(p)+(sideFollowed(p)?'<span class="starmark">⭐ </span>':"")+(p.w?'<span class="wtick">✓</span> ':"")+(p.r?'<span class="rk">#'+p.r+"</span> ":"")+(p.n==="TBD"?esc(p.n):'<span class="pn" data-pp="'+esc(p.n)+'" role="button" tabindex="0">'+esc(p.n)+"</span>")+(p.c?' <span class="cc">'+esc(p.c)+"</span>":"")+'</span>'+(p.s.length?'<span class="sets">'+sets(p,opp).join(" ")+"</span>":(prob!=null?'<span class="prob" title="Polymarket market price — informational, not betting advice">'+(prob>=50?"<b>":"")+prob+"%"+(prob>=50?"</b>":"")+"</span>":""))+"</div>";
   const pa=!m.done&&!live&&m.o?Math.round(m.o[0]*100):null,P=pa==null?null:[pa,100-pa];  /* complement, so they sum to 100 */
   const when=m.date?(m.done?new Date(m.date).toLocaleDateString(undefined,{month:"short",day:"numeric"}):fmtWhen(m.date)):"";
   const cal=(!m.done&&!live&&m.date&&m.a.n!=="TBD"&&!timeTBD(m.date))?'<br><a class="mcal" target="_blank" rel="noopener" href="'+gcalM(m,slam)+'">📅 Gcal</a> <a class="mcal" href="'+icsM(m,slam)+'" download="'+esc((m.a.n+" v "+m.b.n).replace(/[^\w]+/g,"-"))+'.ics">iCal</a>':"";
-  return head+'<div class="match'+(live?" live":"")+'"><div class="who">'+row(m.a,P?P[0]:null,m.b)+row(m.b,P?P[1]:null,m.a)+'</div><div class="st">'+(m._draw?esc(m._draw)+" · ":"")+esc(m.round&&m._draw?m.round:(m.done?(retag(m)?m.state:"Completed"):m.state||"Scheduled"))+(m._draw?retag(m):"")+(when?"<br>"+when:"")+cal+(m.done&&HL[m.id]?"<br>"+hlnk(m):"")+"</div></div>";
+  return head+'<div class="match'+(live?" live":"")+'"><div class="who">'+row(m.a,P?P[0]:null,m.b)+row(m.b,P?P[1]:null,m.a)+'</div><div class="st">'+(m._draw?esc(m._draw)+" · ":"")+esc(m.round&&m._draw?m.round:(m.done?(retag(m)?m.state:"Completed"):m.state||"Scheduled"))+(m._draw?retag(m):"")+(when?"<br>"+when:"")+(m.ct?'<br><span class="ct">'+esc(m.ct)+"</span>":"")+(m.tv&&!m.done?'<span class="tv">'+esc(m.tv)+"</span>":"")+cal+(m.done&&HL[m.id]?"<br>"+hlnk(m):"")+"</div></div>";
  }).join("")||'<p class="note">'+(follOnly?"None of your followed players/countries are in this Slam — add more above.":(isToday?"No matches scheduled for today — rest day, or check back once play begins.":"No matches in this round yet."))+"</p>";
 }
 /* Catch-up brief: "haven't followed? here's where we are" — generated purely from the data */
@@ -603,6 +628,9 @@ async function boot(){
     document.getElementById("livehead").innerHTML="🎾 <b>"+esc(DATA.slams[0].name)+"</b> — every draw, every result";
     document.getElementById("tzsel").value=TZ;document.getElementById("tzname").textContent=tzLabel();
     renderBrief(DATA.slams[0]);renderChamps(DATA.slams[0]);renderMatches();
+    /* while a Slam is running the live results lead; the majors row follows them */
+    document.getElementById("livewrap").after(document.getElementById("majorshead"),
+      document.getElementById("slams"),document.getElementById("edpanel"));
    }
    renderRanks();
   }

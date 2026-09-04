@@ -68,10 +68,18 @@ def fetch_tour(tour, rankmap, dates=None):
                 comps = [competitor(x, rankmap) for x in c.get("competitors", [])]
                 if len(comps) != 2:
                     continue
-                matches.append({"id": str(c.get("id", "")),
-                                "round": (c.get("round") or {}).get("displayName", ""),
-                                "date": c.get("date", ""), "done": bool(st.get("completed")),
-                                "state": st.get("description", ""), "a": comps[0], "b": comps[1]})
+                mm = {"id": str(c.get("id", "")),
+                      "round": (c.get("round") or {}).get("displayName", ""),
+                      "date": c.get("date", ""), "done": bool(st.get("completed")),
+                      "state": st.get("description", ""), "a": comps[0], "b": comps[1]}
+                # court + broadcaster: ESPN carries both (~80% of matches) and they are
+                # what turns a chronological list into a real order-of-play board
+                ct = (c.get("venue") or {}).get("court")
+                if ct:
+                    mm["ct"] = ct
+                if c.get("broadcast"):
+                    mm["tv"] = c["broadcast"]
+                matches.append(mm)
             draws.append({"draw": gname, "matches": matches})
         nm = e.get("name", "")
         events.append({"tour": tour, "name": CANON.get(nm, nm), "start": e.get("date", ""),
