@@ -158,6 +158,15 @@ a{color:#256b46}
 .ct{color:var(--text);font-weight:700}
 .tv{border:1px solid var(--line);border-radius:4px;padding:0 4px;margin-left:4px;white-space:nowrap}
 .courthead{margin:18px 0 8px;font-size:13px;font-weight:800;color:var(--acc);border-bottom:1px solid var(--line);padding-bottom:4px}
+.brkt{font-size:14px;margin:16px 0 8px;color:var(--acc)}
+.brk{display:flex;gap:10px;align-items:stretch;overflow-x:auto;padding-bottom:4px}
+.brkcol{flex:1 1 0;min-width:158px;display:flex;flex-direction:column;justify-content:space-around;gap:8px}
+.brkh{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);font-weight:700;text-align:center}
+.brs{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:6px 9px;font-size:13px}
+.brs.pend{opacity:.6}
+.brp{display:flex;justify-content:space-between;gap:8px;padding:1px 0}
+.brp.w{font-weight:800;color:#0d1f14}
+.brsc{color:var(--muted);font-variant-numeric:tabular-nums;white-space:nowrap}
 .stale{color:var(--live);font-weight:700}
 </style>
 </head>
@@ -345,7 +354,7 @@ document.addEventListener("click",e=>{
  const im=e.target.closest("img.av");if(im){showLB(im);return;}
  const pp=e.target.closest("[data-pp]");if(pp){showPath(pp.dataset.pp);return;}
  const px=e.target.closest("[data-ppx]");if(px){document.getElementById("path").innerHTML="";return;}
- const d=e.target.closest("[data-d]");if(d){curDraw=(d.dataset.d==="all"||d.dataset.d==="today")?d.dataset.d:+d.dataset.d;curRound=null;renderMatches();return;}
+ const d=e.target.closest("[data-d]");if(d){curDraw=/^(all|today|brk)$/.test(d.dataset.d)?d.dataset.d:+d.dataset.d;curRound=null;renderMatches();return;}
  const r=e.target.closest("[data-r]");if(r){curRound=r.dataset.r;renderMatches();return;}
  const hm=e.target.closest("#hlmore");if(hm){HLALL=true;renderHLGal();return;}
  const f=e.target.closest("#folltog");if(f){follOnly=!follOnly;renderMatches();}
@@ -500,15 +509,48 @@ function renderHLGal(){
 const COURT_TOP=["Arthur Ashe Stadium","Louis Armstrong Stadium","Grandstand","Stadium 17"];
 function courtRank(c){if(!c)return 9999;const i=COURT_TOP.indexOf(c);if(i>=0)return i;
  const n=String(c).match(/\d+/);return n?100+ +n[0]:500;}
+const BRK_EMPTY='<div class="brs pend"><div class="brp">—</div><div class="brp">—</div></div>';
+function bracketHTML(dr){
+ let qf=dr.matches.filter(m=>m.round==="Quarterfinal"),
+     sf=dr.matches.filter(m=>m.round==="Semifinal"),
+     f =dr.matches.filter(m=>m.round==="Final");
+ if(!qf.length&&!sf.length&&!f.length)return "";
+ /* order the QFs so the two that feed a semi sit next to it — derived by matching
+    players, never assumed from feed order */
+ if(sf.length===2&&qf.length===4){
+  const feeds=(q,s)=>[s.a.n,s.b.n].some(n=>n!=="TBD"&&(n===q.a.n||n===q.b.n));
+  const ord=[];
+  sf.forEach(s=>qf.forEach(q=>{if(feeds(q,s)&&!ord.includes(q))ord.push(q);}));
+  qf.forEach(q=>{if(!ord.includes(q))ord.push(q);});
+  if(ord.length===4)qf=ord;
+ }
+ const slot=m=>{
+  if(!m)return BRK_EMPTY;
+  const side=(p,o)=>'<div class="brp'+(p.w?" w":"")+'"><span>'+(p.w?'<span class="wtick">✓</span> ':"")+esc(p.n)+'</span><span class="brsc">'+(p.s.length?sets(p,o).join(" "):"")+"</span></div>";
+  return '<div class="brs'+(m.done?"":" pend")+'">'+side(m.a,m.b)+side(m.b,m.a)+"</div>";
+ };
+ return '<div class="brk"><div class="brkcol"><div class="brkh">Quarterfinals</div>'
+  +[0,1,2,3].map(i=>slot(qf[i])).join("")+'</div><div class="brkcol"><div class="brkh">Semifinals</div>'
+  +[0,1].map(i=>slot(sf[i])).join("")+'</div><div class="brkcol"><div class="brkh">Final</div>'
+  +slot(f[0])+"</div></div>";
+}
 function renderMatches(){
  if(!DATA||!DATA.slams.length)return;
- const slam=DATA.slams[0],isAll=curDraw==="all",isToday=curDraw==="today",dr=(isAll||isToday)?null:slam.draws[curDraw],rs=(isAll||isToday)?[]:rounds(dr);
- if(!isAll&&!isToday&&(curRound==null||!rs.includes(curRound))){curRound=rs.find(r=>dr.matches.some(m=>m.round===r&&(m.done||(m.state&&!/sched/i.test(m.state)))))||rs[rs.length-1]||null;}
+ const slam=DATA.slams[0],isAll=curDraw==="all",isToday=curDraw==="today",isBrk=curDraw==="brk",dr=(isAll||isToday||isBrk)?null:slam.draws[curDraw],rs=(isAll||isToday||isBrk)?[]:rounds(dr);
+ if(!isAll&&!isToday&&!isBrk&&(curRound==null||!rs.includes(curRound))){curRound=rs.find(r=>dr.matches.some(m=>m.round===r&&(m.done||(m.state&&!/sched/i.test(m.state)))))||rs[rs.length-1]||null;}
  document.getElementById("drawchips").innerHTML=slam.draws.map((d,i)=>'<button class="chip'+(i===curDraw?" on":"")+'" data-d="'+i+'">'+esc(d.draw)+"</button>").join("")
+  +'<button class="chip'+(curDraw==="brk"?" on":"")+'" data-d="brk">🏆 Bracket</button>'
   +'<button class="chip'+(curDraw==="today"?" on":"")+'" data-d="today">🔴 Today\'s order of play</button>'
   +'<button class="chip'+(curDraw==="all"?" on":"")+'" data-d="all">📋 All days</button>'
   +'<button class="chip star'+(follOnly?" on":"")+'" id="folltog">⭐ Following</button>';
  document.getElementById("roundchips").innerHTML=rs.map(r=>'<button class="chip'+(r===curRound?" on":"")+'" data-r="'+esc(r)+'">'+esc(r)+"</button>").join("");
+ if(isBrk){
+  document.getElementById("roundchips").innerHTML='<p class="note">How the singles draws finish — quarterfinals onward, filling in as they are played. Scroll sideways on a narrow screen.</p>';
+  document.getElementById("matches").innerHTML=slam.draws.filter(d=>d.draw.includes("Singles"))
+   .map(d=>{const b=bracketHTML(d);return b?'<h3 class="brkt">'+esc(d.draw)+"</h3>"+b:"";}).join("")
+   ||'<p class="note">The bracket appears once the quarterfinal line-up is drawn.</p>';
+  return;
+ }
  let ms;
  if(follOnly){ms=slam.draws.flatMap(d2=>d2.matches.filter(m=>sideFollowed(m.a)||sideFollowed(m.b)).map(m=>({...m,_draw:d2.draw})));
   document.getElementById("roundchips").innerHTML='<p class="note">Showing every match involving your ⭐ players/countries, across all draws.</p>';}

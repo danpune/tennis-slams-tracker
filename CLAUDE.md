@@ -70,7 +70,12 @@ ESPN: `https://site.api.espn.com/apis/site/v2/sports/tennis/{atp|wta}/{scoreboar
   (AO ausopen.com · RG rolandgarros.com · W wimbledon.com/en_GB/atoz/dates.html · USO usopen.org).
 
 ## Roadmap
-1. Draw bracket view (QF onward) — partially covered by the editions "how it was
-   won" panel; a visual tree is still open — the worldcup2026 bracket tree is a good starting point.
-2. Order-of-play "today" view during Slams (tennis has no fixed kickoff times).
-3. Extend `SLAMS[].eds` with 2028 dates when announced.
+1. Extend `SLAMS[].eds` with 2028 dates when announced.
+2. Live-scores freshness: GitHub's cron fires ~6x/day, not 48. The workflow now
+   loops 5x per trigger (12-min ticks, ~48 min covered) and the page shows a red
+   staleness warning past 45 min, but a guaranteed sub-30-min cadence needs an
+   external pinger + a repo-scoped token (Actions: write). Not done.
+
+DONE: bracket view (QF onward, 🏆 Bracket chip — QFs ordered by deriving which
+pair feeds each semi from player names, not feed order); order-of-play "today"
+view (grouped by court, in playing order).
