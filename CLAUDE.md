@@ -71,10 +71,16 @@ ESPN: `https://site.api.espn.com/apis/site/v2/sports/tennis/{atp|wta}/{scoreboar
 
 ## Roadmap
 1. Extend `SLAMS[].eds` with 2028 dates when announced.
-2. Live-scores freshness: GitHub's cron fires ~6x/day, not 48. The workflow now
-   loops 5x per trigger (12-min ticks, ~48 min covered) and the page shows a red
-   staleness warning past 45 min, but a guaranteed sub-30-min cadence needs an
-   external pinger + a repo-scoped token (Actions: write). Not done.
+2. Live-scores freshness — ADDRESSED client-side, see refreshLive() in index.html.
+   GitHub's cron fires ~6x/day, not 48, so during a Slam the build can be hours behind
+   and a finished match still reads "In Progress" (three were wrong on 2026-09-09).
+   The page now asks ESPN itself: every 3 min while a match is in progress, otherwise
+   only when the build is >45 min old, and never while the tab is hidden — the tennis
+   scoreboard returns the WHOLE draw (~1.7MB, `?dates=` does not narrow it), so it is
+   only fetched when it would actually help. Merged by match id, and a match whose
+   feed-side names no longer match the stored ones is SKIPPED rather than guessed.
+   An external pinger + repo-scoped token would still give a fresher committed build,
+   but is no longer needed for correct scores on screen.
 
 DONE: bracket view (QF onward, 🏆 Bracket chip — QFs ordered by deriving which
 pair feeds each semi from player names, not feed order); order-of-play "today"

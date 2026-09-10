@@ -686,7 +686,65 @@ async function boot(){
  }catch(e){}
  renderRoH(champs);renderHLGal();
 }
-boot();
+/* ---------- client-side live refresh ----------
+   GitHub drops most of this repo's cron slots — a 30-minute cron really lands only a
+   handful of times a day — so during a Slam the build can be hours behind and a finished
+   match still reads "In Progress" (roadmap item 2). Ask ESPN directly from the browser
+   rather than standing up an external pinger and a repo-scoped token. The tennis
+   scoreboard hands back the WHOLE draw (~1.7MB; ?dates= does not narrow it, there is no
+   lighter endpoint), so fetch it only when it would actually help: every 3 min while a
+   match is in progress, otherwise only when the build is over 45 min old. Ticks are
+   skipped while the tab is hidden. */
+const LIVE_STALE_MS=45*6e4, LIVE_POLL_MS=3*6e4;
+let liveTimer=null, liveAt=0;
+/* must reproduce fetch_data.competitor()'s name exactly — it is the safety check below */
+const sideName=t=>{const a=t.athlete||{},r=t.roster||{};
+ return a.displayName||r.shortDisplayName||r.displayName||"?";};
+const sig=m=>m.state+"|"+m.done+"|"+m.a.s.join()+"|"+m.b.s.join();
+async function refreshLive(){
+ if(!DATA||!DATA.slams.length)return 0;
+ const slam=DATA.slams[0],now=Date.now();
+ if(now<Date.parse(slam.start)-864e5||now>Date.parse(slam.end)+864e5)return 0;
+ const anyLive=slam.draws.some(d=>d.matches.some(m=>!m.done&&/progress/i.test(m.state||"")));
+ const built=DATA.updated?Date.parse(DATA.updated):0;
+ if(now-Math.max(liveAt,built)<(anyLive?LIVE_POLL_MS:LIVE_STALE_MS))return 0;
+ let feed;
+ try{const r=await fetch("https://site.api.espn.com/apis/site/v2/sports/tennis/"+
+      encodeURIComponent(slam.tour)+"/scoreboard",{cache:"no-store"});
+     if(!r.ok)return 0;feed=await r.json();}catch(e){return 0;}
+ const up={};
+ (feed.events||[]).forEach(e=>(e.groupings||[]).forEach(g=>(g.competitions||[]).forEach(c=>{up[c.id]=c;})));
+ if(!Object.keys(up).length)return 0;
+ let changed=0;
+ slam.draws.forEach(d=>d.matches.forEach(m=>{
+  const c=up[m.id];if(!c)return;
+  const ts=(c.competitors||[]).slice(0,2);if(ts.length<2)return;
+  /* never write a score onto the wrong player — if the feed's order no longer agrees
+     with what the build stored, skip this match rather than guess */
+  if(sideName(ts[0])!==m.a.n||sideName(ts[1])!==m.b.n)return;
+  const st=(c.status||{}).type||{},was=sig(m);
+  m.state=st.description||m.state;m.done=!!st.completed;
+  [m.a,m.b].forEach((side,i)=>{
+   const ls=ts[i].linescores||[];
+   side.s=ls.map(x=>parseInt(x.value,10)||0);
+   side.w=!!ts[i].winner;
+   const tb=ls.map(x=>x.tiebreak==null?null:x.tiebreak);
+   if(tb.some(v=>v!=null))side.tb=tb;else delete side.tb;
+  });
+  if(sig(m)!==was)changed++;
+ }));
+ liveAt=Date.now();
+ const el=document.getElementById("upd");
+ if(el)el.textContent="updated "+new Date(liveAt).toLocaleTimeString()+" — live from the feed";
+ if(changed){renderBrief(slam);renderChamps(slam);renderMatches();}
+ return changed;
+}
+document.addEventListener("visibilitychange",()=>{if(!document.hidden)refreshLive();});
+boot().then(()=>{
+ refreshLive();
+ if(liveTimer)clearInterval(liveTimer);
+ liveTimer=setInterval(()=>{if(!document.hidden)refreshLive();},LIVE_POLL_MS);
+});
 /* fun footer visit counter (free Abacus API; counts page views; fails silently if the service is down) */
 fetch("https://abacus.jasoncameron.dev/hit/danpune-tennis-slams/visits").then(r=>r.json()).then(d=>{if(d&&d.value!=null)document.getElementById("visits").textContent=" · 👀 "+d.value.toLocaleString()+" visits";}).catch(()=>{});
 </script>
