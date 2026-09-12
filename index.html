@@ -167,9 +167,11 @@ a{color:#256b46}
 .brp{display:flex;justify-content:space-between;gap:8px;padding:1px 0}
 .brp.w{font-weight:800;color:#0d1f14}
 .brsc{color:var(--muted);font-variant-numeric:tabular-nums;white-space:nowrap}
+.brp>span:first-child{display:flex;align-items:center;gap:0 4px}.brp .av{width:24px;height:24px;margin-right:2px;flex:none}.brp .avi{font-size:9px}
 /* phone: narrow the columns so the Final column peeks in — that edge is the only
    affordance telling you the bracket scrolls sideways */
-@media (max-width:560px){.brkcol{min-width:128px}.brs{padding:5px 7px;font-size:12.5px}}
+@media (max-width:560px){.brkcol{min-width:170px}.brs{padding:5px 7px;font-size:12.5px}
+ .brp{flex-wrap:wrap;gap:0 8px}.brsc{flex-basis:100%;padding-left:30px}} /* phone: name, then score beneath — they never fit one line */
 .stale{color:var(--live);font-weight:700}
 </style>
 </head>
@@ -532,7 +534,7 @@ function bracketHTML(dr){
  }
  const slot=m=>{
   if(!m)return BRK_EMPTY;
-  const side=(p,o)=>'<div class="brp'+(p.w?" w":"")+'"><span>'+(p.w?'<span class="wtick">✓</span> ':"")+esc(p.n)+'</span><span class="brsc">'+((p.s||[]).length?sets(p,o).join(" "):"")+"</span></div>";
+  const side=(p,o)=>'<div class="brp'+(p.w?" w":"")+'"><span>'+av(p)+(p.w?'<span class="wtick">✓</span> ':"")+esc(p.n)+'</span><span class="brsc">'+((p.s||[]).length?sets(p,o).join(" "):"")+"</span></div>";
   return '<div class="brs'+(m.done?"":" pend")+'">'+side(m.a,m.b)+side(m.b,m.a)+"</div>";
  };
  return '<div class="brk"><div class="brkcol"><div class="brkh">Quarterfinals</div>'
