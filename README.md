@@ -39,7 +39,7 @@ flowchart LR
     subgraph actions ["GitHub Actions — every 30 min"]
         F["fetch_data.py"]
         H["build_highlights.py<br/>oEmbed-verified official clips"]
-        P["build_photos.py<br/>matched by ESPN id, credited"]
+        P["build_photos.py<br/>matched by ESPN id or unique name, credited"]
     end
 
     subgraph repo ["Committed JSON snapshots"]

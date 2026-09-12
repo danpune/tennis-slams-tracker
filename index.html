@@ -765,7 +765,9 @@ function refreshLive(){
  /* the freshness gate is checked before an await and liveAt is set after it, so a
     visibilitychange landing mid-fetch would start a SECOND 1.7MB download */
  if(liveBusy)return liveBusy;
- liveBusy=refreshLiveOnce().finally(()=>{liveBusy=null;});
+ /* restamp on EVERY outcome: a failed or empty ESPN fetch returns early, and must let the
+    "scores may be delayed" warning come back once the last good data ages past 45 min */
+ liveBusy=refreshLiveOnce().finally(()=>{liveBusy=null;stampUpd();});
  return liveBusy;
 }
 async function refreshLiveOnce(){
