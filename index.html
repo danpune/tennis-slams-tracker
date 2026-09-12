@@ -373,6 +373,7 @@ document.addEventListener("keydown",e=>{
 const localTZ=Intl.DateTimeFormat().resolvedOptions().timeZone||"UTC";
 const TZ_OPTS=[["__local__","your time ("+localTZ.split("/").pop().replace(/_/g," ")+")"],["__venue__","venue time"],
  ["Asia/Kolkata","India (IST)"],["Europe/London","UK"],["Europe/Paris","Central Europe"],
+ ["Asia/Jerusalem","Israel"],
  ["America/New_York","US Eastern"],["America/Chicago","US Central"],["America/Los_Angeles","US Pacific"],
  ["Australia/Melbourne","Australia (Melbourne)"],["Asia/Tokyo","Japan"]];
 let TZ=localStorage.getItem("gs_tz")||"__local__";
