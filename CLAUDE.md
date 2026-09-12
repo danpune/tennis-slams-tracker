@@ -51,6 +51,7 @@ World Cup one is dark; keep it that way).
   tennis player (Q10833314) with that exact English name — otherwise skipped. Credit
   (author + licence) shows in the photo lightbox; CC BY/BY-SA require it — keep it.
   Doubles sides carry `ids` (one per partner) and get two faces. No photo ⇒ initials chip.
+  Players with no photo (`checked`) are re-looked-up once per new Slam (`slam` key).
   Don't add photo sources without a licence (ATP/WTA/agency images are not free).
 - `.github/workflows/update-data.yml` — every 30 min, SHA-pinned, rebase-before-push,
   fail-safe (never overwrites good data with an empty fetch).

@@ -13,7 +13,7 @@ author and licence, which the page shows as credit in the photo lightbox.
 
 Merge-only and fail-safe like the other builders: ids already decided (photo or checked)
 are not looked up again, so after the first run a CI tick costs one read of data.json.
-Delete an id from "checked" to retry it. Standard library only, no API key.
+Every new Slam re-checks the "checked" ids (see main); delete one to retry it sooner. Standard library only, no API key.
 """
 import html, json, os, re, sys, unicodedata, urllib.parse, urllib.request
 from concurrent.futures import ThreadPoolExecutor
@@ -136,11 +136,17 @@ def main():
         except Exception as e:
             print(f"{path} unreadable ({e}); refusing to overwrite.", file=sys.stderr)
             return
-    ppl = players(json.load(open("data.json", encoding="utf-8")))
+    data = json.load(open("data.json", encoding="utf-8"))
+    ppl = players(data)
+    # A new Slam re-checks everyone still without a photo: Commons gains fresh tournament
+    # photos every week, and most of the draw returns. Found photos are kept for good.
+    slam = f"{data['slams'][0]['name']} {data['slams'][0]['start'][:4]}" if data.get("slams") else None
+    if slam and doc.get("slam") != slam:
+        doc["checked"] = []
     todo = [i for i in ppl if i not in doc["photos"] and i not in doc["checked"]]
     if not todo:
         print(f"photos.json: nothing new ({len(doc['photos'])} photos)")
-        return
+        return   # (a new-Slam reset always leaves todo non-empty, so it is never lost here)
     try:
         with ThreadPoolExecutor(24) as ex:
             need = [i for i, has in zip(todo, ex.map(espn_has, todo)) if not has]
@@ -167,6 +173,7 @@ def main():
     # ESPN headshot exists: nothing to store, and no reason to look again
     doc["checked"].extend(sorted(have_espn))
     doc["checked"] = sorted(set(doc["checked"]))
+    doc["slam"] = slam   # only stamped after a completed run, so a failed lookup retries
     with open(path, "w", encoding="utf-8") as fh:
         json.dump(doc, fh, ensure_ascii=False, indent=0)
     print(f"photos.json: +{added} photos ({len(doc['photos'])} total); "
