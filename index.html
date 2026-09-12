@@ -388,7 +388,10 @@ let TZ=localStorage.getItem("gs_tz")||"__local__";
 if(TZ==="local")TZ="__local__";if(TZ==="venue")TZ="__venue__";               /* migrate old values */
 if(!TZ_OPTS.some(o=>o[0]===TZ))TZ="__local__";
 document.getElementById("tzsel").innerHTML=TZ_OPTS.map(([v,l])=>'<option value="'+v+'">'+esc(l)+"</option>").join("");
-function curSlamTz(){const s=DATA&&DATA.slams[0]&&SLAMS.find(x=>x.name===DATA.slams[0].name);return s?s.tz:undefined;}
+/* normSlam, not ===: ESPN's "Roland Garros" spelling already drifted once, and a miss
+   here silently falls back to the VIEWER's timezone — which now also picks the wrong
+   default day for the order-of-play view. */
+function curSlamTz(){const s=DATA&&DATA.slams[0]&&SLAMS.find(x=>normSlam(x.name)===normSlam(DATA.slams[0].name));return s?s.tz:undefined;}
 function effTz(){return TZ==="__venue__"?(curSlamTz()||localTZ):(TZ==="__local__"?localTZ:TZ);}
 function venueDay(dateStr){return new Date(dateStr).toLocaleDateString("en-CA",{timeZone:curSlamTz()||localTZ});}
 function venueToday(){return venueDay(new Date().toISOString());}
@@ -691,10 +694,7 @@ async function boot(){
  try{
   const r=await fetch("data.json?t="+Date.now(),{cache:"no-store"});
   if(r.ok){DATA=await r.json();
-   {const age=Date.now()-Date.parse(DATA.updated),el=document.getElementById("upd");
-    if(age>45*6e4){const hh=Math.floor(age/36e5),mm=Math.round(age%36e5/6e4);
-     el.innerHTML='<span class="stale">⚠ scores may be delayed — updated '+(hh?hh+"h ":"")+mm+"m ago</span>";}
-    else el.textContent="updated "+new Date(DATA.updated).toLocaleString();}
+   stampUpd();
    collectPlayers();
    if(DATA.slams.length){
     document.getElementById("livewrap").style.display="";
@@ -728,12 +728,32 @@ async function boot(){
    match is in progress, otherwise only when the build is over 45 min old. Ticks are
    skipped while the tab is hidden. */
 const LIVE_STALE_MS=45*6e4, LIVE_POLL_MS=3*6e4;
-let liveTimer=null, liveAt=0;
+let liveTimer=null, liveAt=0, liveBusy=null;
+/* One writer for #upd. refreshLive() used to overwrite it with a plain timestamp, so
+   once a client refresh had succeeded the "scores may be delayed" warning could never
+   come back — ESPN could then be down for hours behind a confident-looking clock. */
+function stampUpd(){
+ const el=document.getElementById("upd");if(!el||!DATA)return;
+ const ref=Math.max(liveAt,DATA.updated?Date.parse(DATA.updated):0),age=Date.now()-ref;
+ if(age>LIVE_STALE_MS){const hh=Math.floor(age/36e5),mm=Math.round(age%36e5/6e4);
+  el.innerHTML='<span class="stale">⚠ scores may be delayed — updated '+(hh?hh+"h ":"")+mm+"m ago</span>";}
+ else el.textContent="updated "+new Date(ref).toLocaleTimeString()+(liveAt>=ref?" — live from the feed":"");
+}
 /* must reproduce fetch_data.competitor()'s name exactly — it is the safety check below */
 const sideName=t=>{const a=t.athlete||{},r=t.roster||{};
  return a.displayName||r.shortDisplayName||r.displayName||"?";};
-const sig=m=>m.state+"|"+m.done+"|"+m.a.s.join()+"|"+m.b.s.join();
-async function refreshLive(){
+/* date and court are part of the signature because the order-of-play view is now the
+   default and is made ENTIRELY of them — a 15-minute reschedule of the US Open women's
+   final sat wrong on the page, and in its calendar links, until the next build. */
+const sig=m=>[m.state,m.done,m.date,m.ct,m.a.s.join(),m.b.s.join()].join("|");
+function refreshLive(){
+ /* the freshness gate is checked before an await and liveAt is set after it, so a
+    visibilitychange landing mid-fetch would start a SECOND 1.7MB download */
+ if(liveBusy)return liveBusy;
+ liveBusy=refreshLiveOnce().finally(()=>{liveBusy=null;});
+ return liveBusy;
+}
+async function refreshLiveOnce(){
  if(!DATA||!DATA.slams.length)return 0;
  const slam=DATA.slams[0],now=Date.now();
  if(now<Date.parse(slam.start)-864e5||now>Date.parse(slam.end)+864e5)return 0;
@@ -756,6 +776,8 @@ async function refreshLive(){
   if(sideName(ts[0])!==m.a.n||sideName(ts[1])!==m.b.n)return;
   const st=(c.status||{}).type||{},was=sig(m);
   m.state=st.description||m.state;m.done=!!st.completed;
+  if(c.date)m.date=c.date;
+  const ct=(c.venue||{}).court;if(ct)m.ct=ct;
   [m.a,m.b].forEach((side,i)=>{
    const ls=ts[i].linescores||[];
    side.s=ls.map(x=>parseInt(x.value,10)||0);
@@ -766,9 +788,16 @@ async function refreshLive(){
   if(sig(m)!==was)changed++;
  }));
  liveAt=Date.now();
- const el=document.getElementById("upd");
- if(el)el.textContent="updated "+new Date(liveAt).toLocaleTimeString()+" — live from the feed";
- if(changed){renderBrief(slam);renderChamps(slam);renderMatches();}
+ stampUpd();
+ if(changed){
+  /* a re-render replaces #matches wholesale; without this the bracket snaps back to the
+     left edge and keyboard focus drops to <body>, every 3 minutes during live play */
+  const pp=(document.activeElement||{}).dataset&&document.activeElement.dataset.pp;
+  const brk=document.querySelector("#matches .brk"),sl=brk?brk.scrollLeft:0;
+  renderBrief(slam);renderChamps(slam);renderMatches();
+  const brk2=document.querySelector("#matches .brk");if(brk2&&sl)brk2.scrollLeft=sl;
+  if(pp){const el2=document.querySelector('#matches [data-pp="'+CSS.escape(pp)+'"]');if(el2)el2.focus();}
+ }
  return changed;
 }
 document.addEventListener("visibilitychange",()=>{if(!document.hidden)refreshLive();});

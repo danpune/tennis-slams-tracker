@@ -85,6 +85,12 @@ ESPN: `https://site.api.espn.com/apis/site/v2/sports/tennis/{atp|wta}/{scoreboar
    scoreboard returns the WHOLE draw (~1.7MB, `?dates=` does not narrow it), so it is
    only fetched when it would actually help. Merged by match id, and a match whose
    feed-side names no longer match the stored ones is SKIPPED rather than guessed.
+   It merges START TIME and COURT as well as scores — the order-of-play view is made
+   entirely of those two, and a 15-minute reschedule of the 2026 US Open women's final
+   sat wrong on the page (and in its GCal/.ics links) until the next build. Single-flight:
+   the freshness gate is read before the await, so without a guard a tab-switch landing
+   mid-fetch starts a second 1.7MB download. #upd has ONE writer (stampUpd) so the
+   "scores may be delayed" warning can still re-appear after a successful refresh.
    An external pinger + repo-scoped token would still give a fresher committed build,
    but is no longer needed for correct scores on screen.
 
