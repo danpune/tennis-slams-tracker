@@ -85,3 +85,5 @@ ESPN: `https://site.api.espn.com/apis/site/v2/sports/tennis/{atp|wta}/{scoreboar
 DONE: bracket view (QF onward, 🏆 Bracket chip — QFs ordered by deriving which
 pair feeds each semi from player names, not feed order); order-of-play "today"
 view (grouped by court, in playing order).
+Views are linkable: #bracket, #today, #all-days, #mens-singles … (hashView() in index.html;
+a hash beats the order-of-play default).

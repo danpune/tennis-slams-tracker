@@ -360,7 +360,7 @@ document.addEventListener("click",e=>{
  const im=e.target.closest("img.av");if(im){showLB(im);return;}
  const pp=e.target.closest("[data-pp]");if(pp){showPath(pp.dataset.pp);return;}
  const px=e.target.closest("[data-ppx]");if(px){document.getElementById("path").innerHTML="";return;}
- const d=e.target.closest("[data-d]");if(d){curDraw=/^(all|today|brk)$/.test(d.dataset.d)?d.dataset.d:+d.dataset.d;curRound=null;renderMatches();return;}
+ const d=e.target.closest("[data-d]");if(d){curDraw=/^(all|today|brk)$/.test(d.dataset.d)?d.dataset.d:+d.dataset.d;curRound=null;history.replaceState(null,"","#"+viewHash());renderMatches();return;}
  const r=e.target.closest("[data-r]");if(r){curRound=r.dataset.r;renderMatches();return;}
  const hm=e.target.closest("#hlmore");if(hm){HLALL=!HLALL;renderHLGal();return;}
  const f=e.target.closest("#folltog");if(f){follOnly=!follOnly;renderMatches();}
@@ -400,6 +400,14 @@ function icsM(m,slam){const t0=Date.parse(m.date),t1=t0+150*60000;
  return "data:text/calendar;charset=utf-8,"+encodeURIComponent(v);}
 /* ── live slam results ── */
 let DATA=null,HL={},curDraw=0,curRound=null,follOnly=false,HLALL=false;
+/* the view lives in the URL so it can be shared/bookmarked: #bracket, #today, #all-days, #mens-singles … */
+const HASHV={brk:"bracket",today:"today",all:"all-days"},slug=s=>s.toLowerCase().replace(/'/g,"").replace(/\W+/g,"-");
+const viewHash=()=>HASHV[curDraw]||slug(DATA.slams[0].draws[curDraw].draw);
+function hashView(){const h=location.hash.slice(1);if(!h||!DATA||!DATA.slams.length)return false;
+ const k=Object.keys(HASHV).find(x=>HASHV[x]===h),i=DATA.slams[0].draws.findIndex(d=>slug(d.draw)===h);
+ if(k)curDraw=k;else if(i>=0)curDraw=i;else return false;
+ curRound=null;return true;}
+addEventListener("hashchange",()=>{if(hashView())renderMatches();});
 const roundOrder=["Final","Semifinal","Quarterfinal","Round 4","Round 3","Round 2","Round 1","Qualifying Final","Qualifying 2nd Round","Qualifying 1st Round"];
 function rounds(dr){const rs=[...new Set(dr.matches.map(m=>m.round).filter(Boolean))];
  return rs.sort((a,b)=>{const ia=roundOrder.findIndex(r=>a.startsWith(r)),ib=roundOrder.findIndex(r=>b.startsWith(r));return (ia<0?99:ia)-(ib<0?99:ib);});}
@@ -685,10 +693,12 @@ async function boot(){
        raise the 4 if the business end should start sooner. */
     const vt=venueToday();
     if(DATA.slams[0].draws.reduce((n,d)=>n+d.matches.filter(m=>m.date&&venueDay(m.date)===vt).length,0)>=4)curDraw="today";
+    const linked=hashView();   /* a shared link beats the default */
     renderBrief(DATA.slams[0]);renderChamps(DATA.slams[0]);renderMatches();
     /* while a Slam is running the live results lead; the majors row follows them */
     document.getElementById("livewrap").after(document.getElementById("majorshead"),
       document.getElementById("slams"),document.getElementById("edpanel"));
+    if(linked)document.getElementById("livehead").scrollIntoView();
    }
    renderRanks();
   }
