@@ -312,7 +312,7 @@ function renderSlams(){
   const done=EDITIONS.find(x=>normSlam(x.name)===normSlam(s.name)&&x.year===new Date().getFullYear());
   if(done){
    const champ=d=>{const dr=done.draws.find(x=>x.draw===d);const f=dr&&dr.matches.find(m=>m.done&&m.round==="Final");
-    if(!f)return null;const w=f.a.w?f.a:f.b;return w.n;};
+    if(!f)return null;const w=winSide(f);return w?w.n:null;};
    const cm=champ("Men's Singles"),cw=champ("Women's Singles"),e2=nextEd(s);
    return '<div class="slam done" data-ed="'+esc(done.year+"|"+done.name)+'" role="button" tabindex="0"><div><span class="badge b-done">✓ Completed</span></div><div class="nm">'+s.flag+" "+esc(s.name)+" "+done.year+'</div><div class="meta">'+esc(s.venue)+" · "+s.surface+'</div><div class="dates">🏆 '+esc(cm||"")+(cw?" · "+esc(cw):"")+'</div><div class="note">Tap for winners &amp; results'+(e2?" · next: "+fmtD(e2.start)+" – "+fmtDY(e2.end):"")+"</div></div>";
   }
@@ -456,6 +456,9 @@ function showLB(im){
  d.addEventListener("click",()=>d.remove());
  dlg(d);
 }
+/* the side ESPN flagged as winner, or null. Never assume "not a, so b": a client-side
+   refresh can mark a match done a moment before the winner flag arrives. */
+const winSide=m=>m.a.w?m.a:(m.b.w?m.b:null);
 const retag=m=>/retired|walkover|default/i.test(m.state||"")?' <span class="cc">('+esc(String(m.state).toLowerCase().replace("retired","ret."))+")</span>":"";
 const hlnk=m=>m.done&&HL[m.id]?' <a class="hlnk" href="https://www.youtube.com/watch?v='+esc(HL[m.id].yt)+'" target="_blank" rel="noopener">▶ Highlights</a>':"";
 function showPath(name){
@@ -485,9 +488,9 @@ function renderEdition(ed){
  document.getElementById("edpanel").innerHTML='<div class="path"><div class="pt"><span>'+(slamMeta?slamMeta.flag+" ":"")+esc(ed.name)+" "+ed.year+' — how it was won</span><button class="px" data-edx="1" title="Close">✕</button></div>'
   +draws.map(dr=>{
    const f=dr.matches.find(m=>m.done&&m.round==="Final");
-   const w=f?(f.a.w?f.a:f.b):null;
-   const lines=order.flatMap(r=>dr.matches.filter(m=>m.done&&m.round===r).map(m=>{
-    const win=m.a.w?m.a:m.b,los=win===m.a?m.b:m.a;
+   const w=f?winSide(f):null;
+   const lines=order.flatMap(r=>dr.matches.filter(m=>m.done&&m.round===r&&winSide(m)).map(m=>{
+    const win=winSide(m),los=win===m.a?m.b:m.a;
     const ws=sets(win,los),ls=sets(los,win),sc=ws.map((v,k)=>v+"-"+(ls[k]??"")).join(" ");
     return '<div class="edl"><b>'+{Final:"F",Semifinal:"SF",Quarterfinal:"QF"}[r]+"</b> "+esc(win.n)+" d. "+esc(los.n)+' <span class="sc">'+esc(sc)+"</span>"+retag(m)+"</div>";
    }));
@@ -520,7 +523,7 @@ function renderHLGal(){
   if(m.done&&HL[m.id])live[m.id]={m,dr:dr.draw,sl:s.name};})));
  let items=Object.entries(HL).map(([id,h])=>{
   const L=live[id];
-  if(L){const w=L.m.a.w?L.m.a:L.m.b,l=w===L.m.a?L.m.b:L.m.a;
+  if(L&&winSide(L.m)){const w=winSide(L.m),l=w===L.m.a?L.m.b:L.m.a;
    const gw=sets(w,l),gl=sets(l,w);
    return {yt:h.yt,w:w.n,l:l.n,sc:gw.map((v,k)=>v+"-"+(gl[k]??"")).join(" "),dr:L.dr,rd:L.m.round,d:L.m.date,sl:L.sl};}
   return h.w?{yt:h.yt,w:h.w,l:h.l,sc:h.sc||"",dr:h.dr||"",rd:h.rd||"",d:h.d||"",sl:h.sl||""}:null;
@@ -565,7 +568,7 @@ function bracketHTML(dr){
  }
  const slot=m=>{
   if(!m)return BRK_EMPTY;
-  const side=(p,o)=>'<div class="brp'+(p.w?" w":"")+'"><span>'+av(p)+(p.w?'<span class="wtick">✓</span> ':"")+(p.r?'<span class="rk">#'+p.r+"</span> ":"")+esc(p.n)+'</span><span class="brsc">'+((p.s||[]).length?sets(p,o).join(" "):"")+"</span></div>";
+  const side=(p,o)=>'<div class="brp'+(p.w?" w":"")+'"><span>'+av(p)+(p.w?'<span class="wtick">✓</span> ':"")+(p.r?'<span class="rk">#'+p.r+"</span> ":"")+esc(p.n)+'</span><span class="brsc">'+((p.s||[]).length?sets(p,o).join(" "):"")+(p.w?retag(m):"")+"</span></div>";
   return '<div class="brs'+(m.done?"":" pend")+'">'+side(m.a,m.b)+side(m.b,m.a)+"</div>";
  };
  /* headers sit outside the spaced box stack, so each semi centres between its two
@@ -613,7 +616,7 @@ function renderMatches(){
    if(ct!==lastDay){lastDay=ct;head='<div class="courthead">'+esc(ct)+"</div>";}}
   const row=(p,prob,opp)=>'<div class="row'+(p.w?" w":"")+'"><span class="p">'+av(p)+(sideFollowed(p)?'<span class="starmark">⭐ </span>':"")+(p.w?'<span class="wtick">✓</span> ':"")+(p.r?'<span class="rk">#'+p.r+"</span> ":"")+(isTBD(p.n)?esc(p.n):'<span class="pn" data-pp="'+esc(p.n)+'" role="button" tabindex="0">'+esc(p.n)+"</span>")+(p.c?' <span class="cc">'+esc(p.c)+"</span>":"")+'</span>'+(p.s.length?'<span class="sets">'+sets(p,opp).join(" ")+"</span>":(prob!=null?'<span class="prob" title="Polymarket market price — informational, not betting advice">'+(prob>=50?"<b>":"")+prob+"%"+(prob>=50?"</b>":"")+"</span>":""))+"</div>";
   const pa=!m.done&&!live&&m.o?Math.round(m.o[0]*100):null,P=pa==null?null:[pa,100-pa];  /* complement, so they sum to 100 */
-  const when=m.date?(m.done?new Date(m.date).toLocaleDateString(undefined,{month:"short",day:"numeric"}):fmtWhen(m.date)):"";
+  const when=m.date?(m.done?new Date(m.date).toLocaleDateString(undefined,{month:"short",day:"numeric",timeZone:timeTBD(m.date)?(curSlamTz()||effTz()):effTz()}):fmtWhen(m.date)):"";
   const cal=(!m.done&&!live&&m.date&&!isTBD(m.a.n)&&!timeTBD(m.date))?'<br><a class="mcal" target="_blank" rel="noopener" href="'+gcalM(m,slam)+'">📅 Gcal</a> <a class="mcal" href="'+icsM(m,slam)+'" download="'+esc((m.a.n+" v "+m.b.n).replace(/[^\w]+/g,"-"))+'.ics">iCal</a>':"";
   return head+'<div class="match'+(live?" live":"")+'"><div class="who">'+row(m.a,P?P[0]:null,m.b)+row(m.b,P?P[1]:null,m.a)+'</div><div class="st">'+(m._draw?esc(m._draw)+" · ":"")+esc(m.round&&m._draw?m.round:(m.done?(retag(m)?m.state:"Completed"):m.state||"Scheduled"))+(m._draw?retag(m):"")+(when?"<br>"+when:"")+(m.ct?'<br><span class="ct">'+esc(m.ct)+"</span>":"")+(m.tv&&!m.done?'<span class="tv">'+esc(m.tv)+"</span>":"")+cal+(m.done&&HL[m.id]?"<br>"+hlnk(m):"")+"</div></div>";
  }).join("")||'<p class="note">'+(follOnly?"None of your followed players/countries are in this Slam — add more above.":(isToday?"No matches scheduled for today — rest day, or check back once play begins.":"No matches in this round yet."))+"</p>";
@@ -631,13 +634,13 @@ function renderBrief(slam){
  const short=nm=>nm.split(" / ").length>1?nm.split(" / ").map(x=>x.split(" ").pop()).join("/"):nm;
  slam.draws.forEach(dr=>{
   const ms=dr.matches;
-  const fin=ms.find(m=>m.done&&m.round==="Final");
-  if(fin){const w=fin.a.w?fin.a:fin.b,l=w===fin.a?fin.b:fin.a;
+  const fin=ms.find(m=>m.done&&m.round==="Final"&&winSide(m));
+  if(fin){const w=winSide(fin),l=w===fin.a?fin.b:fin.a;
    lines.push('<div class="bl">🏆 <b>'+esc(dr.draw)+'</b> — champion: <b>'+esc(w.n)+'</b> <span class="dim">beat '+esc(l.n)+"</span></div>");return;}
   const live=ms.filter(m=>!m.done&&m.state&&!/sched/i.test(m.state)&&!isTBD(m.a.n));
   if(live.length){lines.push('<div class="bl">🔴 <b>'+esc(dr.draw)+"</b> — "+esc(live[0].round)+" in progress: "+esc(short(live[0].a.n))+" v "+esc(short(live[0].b.n))+"</div>");return;}
   const pend=roundOrder.map(r=>ms.filter(m=>m.round===r&&!m.done&&!isTBD(m.a.n)&&!isTBD(m.b.n))).find(x=>x.length);
-  if(pend&&pend.length){const dt=pend[0].date?new Date(pend[0].date).toLocaleDateString(undefined,{weekday:"short",month:"short",day:"numeric"}):"";
+  if(pend&&pend.length){const dt=pend[0].date?new Date(pend[0].date).toLocaleDateString(undefined,{weekday:"short",month:"short",day:"numeric",timeZone:timeTBD(pend[0].date)?(curSlamTz()||effTz()):effTz()}):"";
    lines.push('<div class="bl">▶ <b>'+esc(dr.draw)+"</b> — next: "+esc(pend[0].round)+(dt?' <span class="dim">('+dt+")</span>":"")+": "+pend.slice(0,2).map(m=>esc(short(m.a.n))+" v "+esc(short(m.b.n))).join(" · ")+"</div>");return;}
   const done=roundOrder.find(r=>ms.some(m=>m.round===r&&m.done));
   if(done)lines.push('<div class="bl">▶ <b>'+esc(dr.draw)+"</b> — "+esc(done)+" complete</div>");

@@ -46,6 +46,7 @@ jobs:
             if ! python test_fetch.py; then
               echo "self-check failed on tick $i — not committing this tick"
               git checkout -- data.json champions.json highlights.json editions.json photos.json 2>/dev/null || true
+              FAIL=1   # a gate that rejects every tick must not leave the run green
               continue
             fi
             git add data.json champions.json highlights.json editions.json photos.json
@@ -54,4 +55,4 @@ jobs:
               git pull --rebase origin main && git push || echo "push failed on tick $i; next tick retries"
             fi
           done
-          [ -z "$FAIL" ] || { echo "fetch reported stale data; failing the run so it is visible"; exit 1; }
+          [ -z "$FAIL" ] || { echo "a tick failed (stale fetch or rejected by the self-check); failing the run so it is visible"; exit 1; }
