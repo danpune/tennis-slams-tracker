@@ -74,7 +74,7 @@ business end to `editions.json`. Those files are the site's permanent memory.
   `author_url` so only the tournament's *official* channel can ever appear —
   `author_name` is spoofable; the URL isn't.
 - **Privacy as a feature.** No cookies, analytics, accounts or tracking. The browser's
-  only external requests are player photos (ESPN), highlight thumbnails (YouTube,
+  only external requests are player photos (ESPN, Wikimedia Commons), highlight thumbnails (YouTube,
   embeds load on tap via the cookie-less domain) and one anonymous visit-counter ping.
 - **Boring on purpose.** One HTML file, system fonts, no framework, no build. The whole
   site can be read in one sitting and hosted anywhere.
@@ -95,7 +95,9 @@ python3 build_editions.py 20260201 20260607   # final-weekend dates
 
 ## Data sources & attribution
 
-Results, draws and rankings via ESPN's public tennis feed (unofficial); schedules per the
+Results, draws and rankings via ESPN's public tennis feed (unofficial); player photos from
+ESPN or, where ESPN has none, Wikimedia Commons under each photo's free licence (credited in
+the photo view); schedules per the
 official tournament sites; win probabilities are Polymarket market prices — informational
 only, **not betting advice**. Not affiliated with the ATP, WTA, ITF, any tournament,
 ESPN, YouTube or Polymarket; all trademarks belong to their owners. Nothing is hosted or

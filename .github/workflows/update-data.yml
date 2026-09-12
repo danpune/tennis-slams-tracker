@@ -39,15 +39,16 @@ jobs:
             # exits 1 only once data.json is genuinely stale (>6h); a blip exits 0
             python fetch_data.py || { echo "fetch failed on tick $i (data left untouched)"; FAIL=1; }
             python build_highlights.py || true
+            python build_photos.py || true
             # Gate, not a test suite: refuse to stage a tick whose data is wrong.
             # Deliberately not `|| true` — but it must not kill the whole loop
             # either, so a bad tick is skipped and the next one retries.
             if ! python test_fetch.py; then
               echo "self-check failed on tick $i — not committing this tick"
-              git checkout -- data.json champions.json highlights.json editions.json 2>/dev/null || true
+              git checkout -- data.json champions.json highlights.json editions.json photos.json 2>/dev/null || true
               continue
             fi
-            git add data.json champions.json highlights.json editions.json
+            git add data.json champions.json highlights.json editions.json photos.json
             if ! git diff --staged --quiet; then
               git commit -m "Update data $(date -u +%FT%TZ)"
               git pull --rebase origin main && git push || echo "push failed on tick $i; next tick retries"

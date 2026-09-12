@@ -49,6 +49,11 @@ def competitor(x, rankmap):
         if m:
             out["i"] = m.group(1)
             break
+    # doubles: one ESPN id per partner, in the same order as the "A / B" name
+    ids = [re.search(r"/id/(\d+)/", l.get("href", "")) for ra in (r.get("athletes") or [])
+           for l in (ra.get("links") or [])[:1]]
+    if not a and ids and all(ids):
+        out["ids"] = [m.group(1) for m in ids]
     if out.get("i") in rankmap:
         out["r"] = rankmap[out["i"]]   # current ATP/WTA world ranking
     return out

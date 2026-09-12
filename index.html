@@ -97,6 +97,10 @@ h2 b{color:var(--acc)}
 .lb{position:fixed;inset:0;color:#fff;background:rgba(10,18,13,.85);display:flex;flex-direction:column;gap:12px;align-items:center;justify-content:center;z-index:50;cursor:zoom-out}
 .lb img{width:min(340px,78vw);aspect-ratio:1;object-fit:cover;border-radius:18px;background:var(--card);border:1px solid var(--line)}
 .lb .lbn{font-size:17px;font-weight:800}
+.lb .lbc{font-size:12px;opacity:.8;max-width:78vw;text-align:center}.lb .lbc a{color:#fff}
+.avc{object-position:50% 20%}
+.avp{display:inline-flex;vertical-align:middle;margin-right:8px;flex:none}.avp .av{margin-right:0;box-shadow:0 0 0 2px var(--card)}.avp .av+.av{margin-left:-10px}
+@media (max-width:560px){#matches .avp .av,#path .avp .av{width:28px;height:28px}#matches .avp .av+.av,#path .avp .av+.av{margin-left:-12px}.avp{margin-right:6px}} /* two faces, less width on phones */
 .avi{display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;color:#fff;background:#8fa596;cursor:default}
 .b-done{background:#e3efdd;color:var(--acc)}
 .slam.done{cursor:pointer}.slam.done:hover{border-color:var(--acc)}
@@ -167,7 +171,7 @@ a{color:#256b46}
 .brp{display:flex;justify-content:space-between;gap:8px;padding:1px 0}
 .brp.w{font-weight:800;color:#0d1f14}
 .brsc{color:var(--muted);font-variant-numeric:tabular-nums;white-space:nowrap}
-.brp>span:first-child{display:flex;align-items:center;gap:0 4px}.brp .av{width:24px;height:24px;margin-right:2px;flex:none}.brp .avi{font-size:9px}
+.brp>span:first-child{display:flex;align-items:center;gap:0 4px}.brp .av{width:24px;height:24px;margin-right:2px;flex:none}.brp .avi{font-size:9px}.brp .avp{margin-right:2px}.brp .avp .av+.av{margin-left:-8px}
 /* phone: narrow the columns so the Final column peeks in — that edge is the only
    affordance telling you the bracket scrolls sideways */
 @media (max-width:560px){.brkcol{min-width:170px}.brs{padding:5px 7px;font-size:12.5px}
@@ -235,14 +239,15 @@ a{color:#256b46}
   all trademarks belong to their owners.</p>
   <p>Scores, schedules and rankings are factual sports results, read from ESPN's public feed.
   Nothing is hosted or re-uploaded here: ▶ Highlights links go to the tournaments' own
-  official YouTube channels, and player photos load straight from ESPN's public image server.</p>
+  official YouTube channels, and player photos load straight from ESPN's public image server or, where ESPN has none,
+  from Wikimedia Commons under each photo's free licence (tap a photo for its credit).</p>
   <p>Win percentages shown on upcoming matches are market prices from Polymarket, fetched
   server-side and shown for information only — they are predictions by market participants,
   not facts, not endorsements and <b>not betting advice</b>. This site is not affiliated
   with Polymarket.</p>
   <p><b>Privacy:</b> no cookies, no analytics, no ads, no accounts, no tracking of any kind.
   Your ⭐ follows and timezone choice are stored only in your own browser and never leave it.
-  The only external requests your browser makes are for player photos (ESPN),
+  The only external requests your browser makes are for player photos (ESPN, Wikimedia Commons),
   highlight thumbnails (YouTube; a video itself loads — via YouTube's cookie-less
   embed domain — only when you tap play), and one anonymous ping to a public visit
   counter, which carries no cookies and no identifiers — it just adds 1.</p>
@@ -399,7 +404,7 @@ function icsM(m,slam){const t0=Date.parse(m.date),t1=t0+150*60000;
  const v=["BEGIN:VCALENDAR","VERSION:2.0","PRODID:grandslams","BEGIN:VEVENT","UID:"+zstamp(t0)+(m.a.n+m.b.n).replace(/\W/g,"")+"@grandslams","DTSTART:"+zstamp(t0),"DTEND:"+zstamp(t1),"SUMMARY:"+(m.a.n+" v "+m.b.n+" 🎾 "+slam.name).replace(/,/g,""),"DESCRIPTION:"+(m.round||"")+" - scheduled start; length varies","END:VEVENT","END:VCALENDAR"].join("\r\n");
  return "data:text/calendar;charset=utf-8,"+encodeURIComponent(v);}
 /* ── live slam results ── */
-let DATA=null,HL={},curDraw=0,curRound=null,follOnly=false,HLALL=false;
+let DATA=null,HL={},PH={},curDraw=0,curRound=null,follOnly=false,HLALL=false;
 /* the view lives in the URL so it can be shared/bookmarked: #bracket, #today, #all-days, #mens-singles … */
 const HASHV={brk:"bracket",today:"today",all:"all-days"},slug=s=>s.toLowerCase().replace(/'/g,"").replace(/\W+/g,"-");
 const viewHash=()=>HASHV[curDraw]||slug(DATA.slams[0].draws[curDraw].draw);
@@ -419,8 +424,10 @@ const sets=(p,o)=>(p.s||[]).map((v,k)=>{
  return v+(t!=null&&ot!=null&&t<ot?"("+t+")":"");            /* regular set: annotate loser */
 });
 const avIni=n=>{const w=(n||"").split(" / ")[0].trim().split(/\s+/);return (((w[0]||"")[0]||"")+((w[w.length-1]||"")[0]||"")).toUpperCase();};
-const av=p=>{if(!p||!p.n||isTBD(p.n))return"";const ini=esc(avIni(p.n));
- return p.i?'<img class="av" loading="lazy" src="https://a.espncdn.com/i/headshots/tennis/players/full/'+esc(p.i)+'.png" alt="'+esc(p.n||"")+'" title="'+esc(p.n||"")+'" data-ini="'+ini+'" role="button" tabindex="0" onerror="this.replaceWith(Object.assign(document.createElement(&quot;span&quot;),{className:this.className+&quot; avi&quot;,textContent:this.dataset.ini}))">'
+const av=p=>{if(!p||!p.n||isTBD(p.n))return"";
+ if(p.ids&&p.ids.length===2){const ns=p.n.split(" / ");return '<span class="avp">'+p.ids.map((i,k)=>av({i,n:ns[k]||"?"})).join("")+"</span>";}
+ const ini=esc(avIni(p.n)),ph=p.i&&PH[p.i];   /* photos.json: licensed Commons photo for players ESPN has no headshot for */
+ return p.i?'<img class="av'+(ph?" avc":"")+'" loading="lazy" src="'+esc(ph?ph.u:"https://a.espncdn.com/i/headshots/tennis/players/full/"+p.i+".png")+'" alt="'+esc(p.n||"")+'" title="'+esc(p.n||"")+'" data-pid="'+esc(p.i)+'" data-ini="'+ini+'" role="button" tabindex="0" onerror="this.replaceWith(Object.assign(document.createElement(&quot;span&quot;),{className:this.className+&quot; avi&quot;,textContent:this.dataset.ini}))">'
   :'<span class="av avi">'+ini+"</span>";};
 function dlg(d){ /* Escape must close any full-screen overlay we can open by keyboard */
  d.tabIndex=-1;d.setAttribute("role","dialog");d.setAttribute("aria-modal","true");
@@ -429,7 +436,9 @@ function dlg(d){ /* Escape must close any full-screen overlay we can open by key
 }
 function showLB(im){
  const d=document.createElement("div");d.className="lb";
- d.innerHTML='<img src="'+esc(im.src)+'" alt="">'+(im.alt?'<div class="lbn">'+esc(im.alt)+"</div>":"");
+ const ph=PH[im.dataset.pid];
+ d.innerHTML='<img src="'+esc(ph?ph.f.replace("/wiki/File:","/wiki/Special:FilePath/")+"?width=480":im.src)+'" alt="">'+(im.alt?'<div class="lbn">'+esc(im.alt)+"</div>":"")
+  +(ph?'<div class="lbc">Photo: <a href="'+esc(ph.f)+'" target="_blank" rel="noopener">'+esc(ph.a||"Wikimedia Commons")+"</a> · "+(ph.lu?'<a href="'+esc(ph.lu)+'" target="_blank" rel="noopener">'+esc(ph.l)+"</a>":esc(ph.l))+" · via Wikimedia Commons</div>":"");
  d.addEventListener("click",()=>d.remove());
  dlg(d);
 }
@@ -542,7 +551,7 @@ function bracketHTML(dr){
  }
  const slot=m=>{
   if(!m)return BRK_EMPTY;
-  const side=(p,o)=>'<div class="brp'+(p.w?" w":"")+'"><span>'+av(p)+(p.w?'<span class="wtick">✓</span> ':"")+esc(p.n)+'</span><span class="brsc">'+((p.s||[]).length?sets(p,o).join(" "):"")+"</span></div>";
+  const side=(p,o)=>'<div class="brp'+(p.w?" w":"")+'"><span>'+av(p)+(p.w?'<span class="wtick">✓</span> ':"")+(p.r?'<span class="rk">#'+p.r+"</span> ":"")+esc(p.n)+'</span><span class="brsc">'+((p.s||[]).length?sets(p,o).join(" "):"")+"</span></div>";
   return '<div class="brs'+(m.done?"":" pend")+'">'+side(m.a,m.b)+side(m.b,m.a)+"</div>";
  };
  return '<div class="brk"><div class="brkcol"><div class="brkh">Quarterfinals</div>'
@@ -672,6 +681,7 @@ function renderHL(){
 async function boot(){
  renderCount();renderSlams();renderHL();renderMine();
  let champs=[];
+ try{const r=await fetch("photos.json?t="+Date.now(),{cache:"no-store"});if(r.ok)PH=(await r.json()).photos||{};}catch(e){}
  try{const r=await fetch("champions.json?t="+Date.now(),{cache:"no-store"});if(r.ok)champs=(await r.json()).champions||[];}catch(e){}
  try{const r=await fetch("highlights.json?t="+Date.now(),{cache:"no-store"});if(r.ok)HL=(await r.json()).highlights||{};}catch(e){}
  try{const r=await fetch("editions.json?t="+Date.now(),{cache:"no-store"});if(r.ok){EDITIONS=(await r.json()).editions||[];renderSlams();}}catch(e){}

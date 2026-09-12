@@ -44,9 +44,14 @@ World Cup one is dark; keep it that way).
   `?dates=` for historical snapshots). Powers the ✓ Completed four-majors cards
   ("how it was won" panel) and backfilled 2026 AO/RG into champions.json.
   NOTE: ESPN spells it "Roland Garros" (no hyphen) — match slams by normSlam().
-- Player photos: ESPN full-size headshots exist for only ~1/4 of draw players
-  (even top-10s like Muchova lack one) — av() falls back to an initials chip;
-  don't chase other photo sources.
+- Player photos: ESPN full-size headshots exist for only ~1/4 of draw players, so
+  `build_photos.py` → `photos.json` fills the gap with freely licensed Wikimedia Commons
+  photos (user asked for this 2026-09-12). Identity is never guessed: Wikidata's
+  "ESPN.com tennis player ID" (P11585) must equal the ESPN id, else exactly one Wikidata
+  tennis player (Q10833314) with that exact English name — otherwise skipped. Credit
+  (author + licence) shows in the photo lightbox; CC BY/BY-SA require it — keep it.
+  Doubles sides carry `ids` (one per partner) and get two faces. No photo ⇒ initials chip.
+  Don't add photo sources without a licence (ATP/WTA/agency images are not free).
 - `.github/workflows/update-data.yml` — every 30 min, SHA-pinned, rebase-before-push,
   fail-safe (never overwrites good data with an empty fetch).
 
