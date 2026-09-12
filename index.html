@@ -100,7 +100,7 @@ h2 b{color:var(--acc)}
 .lb .lbc{font-size:12px;opacity:.8;max-width:78vw;text-align:center}.lb .lbc a{color:#fff}
 .avc{object-position:50% 20%}
 .avp{display:inline-flex;vertical-align:middle;margin-right:8px;flex:none}.avp .av{margin-right:0;box-shadow:0 0 0 2px var(--card)}.avp .av+.av{margin-left:-10px}
-@media (max-width:560px){#matches .avp .av,#path .avp .av{width:28px;height:28px}#matches .avp .av+.av,#path .avp .av+.av{margin-left:-12px}.avp{margin-right:6px}} /* two faces, less width on phones */
+@media (max-width:560px){#matches .avp .av,#path .avp .av{width:24px;height:24px}#matches .avp .av+.av,#path .avp .av+.av{margin-left:-10px}.avp{margin-right:4px}} /* two faces, less width on phones */
 .avi{display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;color:#fff;background:#8fa596;cursor:default}
 .b-done{background:#e3efdd;color:var(--acc)}
 .slam.done{cursor:pointer}.slam.done:hover{border-color:var(--acc)}
@@ -163,9 +163,16 @@ a{color:#256b46}
 .tv{border:1px solid var(--line);border-radius:4px;padding:0 4px;margin-left:4px;white-space:nowrap}
 .courthead{margin:18px 0 8px;font-size:13px;font-weight:800;color:var(--acc);border-bottom:1px solid var(--line);padding-bottom:4px}
 .brkt{font-size:14px;margin:16px 0 8px;color:var(--acc)}
-.brk{display:flex;gap:10px;align-items:stretch;overflow-x:auto;padding-bottom:4px}
-.brkcol{flex:1 1 0;min-width:158px;display:flex;flex-direction:column;gap:8px}
-.brkb{flex:1;display:flex;flex-direction:column;justify-content:space-around;gap:8px}
+.brk{display:grid;grid-template-columns:repeat(3,minmax(158px,1fr));grid-template-rows:auto repeat(4,1fr);gap:8px 10px;overflow-x:auto;padding-bottom:4px}
+/* equal 1fr rows (sized to the tallest quarter) + spans: each semi covers its two quarters'
+   rows and the final all four, so centring is exact even when names wrap */
+.brkcol,.brkb{display:contents}.brkh{grid-row:1}.brs{align-self:center}
+.brkcol:nth-child(1)>.brkh,.brkcol:nth-child(1) .brs{grid-column:1}
+.brkcol:nth-child(2)>.brkh,.brkcol:nth-child(2) .brs{grid-column:2}
+.brkcol:nth-child(3)>.brkh,.brkcol:nth-child(3) .brs{grid-column:3}
+.brkcol:nth-child(1) .brs:nth-child(2){grid-row:3}.brkcol:nth-child(1) .brs:nth-child(3){grid-row:4}.brkcol:nth-child(1) .brs:nth-child(4){grid-row:5}
+.brkcol:nth-child(1) .brs:nth-child(1){grid-row:2}.brkcol:nth-child(2) .brs:nth-child(1){grid-row:2/span 2}.brkcol:nth-child(2) .brs:nth-child(2){grid-row:4/span 2}
+.brkcol:nth-child(3) .brs{grid-row:2/span 4}
 .brkh{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);font-weight:700;text-align:center}
 .brs{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:6px 9px;font-size:13px}
 .brs.pend{color:var(--muted);border-style:dashed}
@@ -175,8 +182,8 @@ a{color:#256b46}
 .brp>span:first-child{display:flex;align-items:center;gap:0 4px}.brp .av{width:24px;height:24px;margin-right:2px;flex:none}.brp .avi{font-size:9px}.brp .avp{margin-right:2px}.brp .avp .av+.av{margin-left:-8px}
 /* phone: narrow the columns so the Final column peeks in — that edge is the only
    affordance telling you the bracket scrolls sideways */
-@media (max-width:560px){.brkcol{min-width:170px}.brs{padding:5px 7px;font-size:12.5px}
- .brp{flex-wrap:wrap;gap:0 8px}.brsc{flex-basis:100%;padding-left:30px}} /* phone: name, then score beneath — they never fit one line */
+@media (max-width:1024px){.brp{flex-wrap:wrap;gap:0 8px}.brsc{flex-basis:100%;padding-left:30px}} /* narrow: name, then score beneath — with photo + ranking they don't fit one line */
+@media (max-width:560px){.brk{grid-template-columns:repeat(3,minmax(170px,1fr))}.brs{padding:5px 7px;font-size:12.5px}}
 .stale{color:var(--live);font-weight:700}
 </style>
 </head>
@@ -250,7 +257,8 @@ a{color:#256b46}
   Your ⭐ follows and timezone choice are stored only in your own browser and never leave it.
   The only external requests your browser makes are for player photos (ESPN, Wikimedia Commons),
   highlight thumbnails (YouTube; a video itself loads — via YouTube's cookie-less
-  embed domain — only when you tap play), and one anonymous ping to a public visit
+  embed domain — only when you tap play), ESPN's public scoreboard (fetched only while a
+  Slam is on and our saved scores are behind, to keep live scores current), and one anonymous ping to a public visit
   counter, which carries no cookies and no identifiers — it just adds 1.</p>
   <p class="note">If you represent a rights holder and have a concern about anything shown
   here, please open an issue on the <a href="https://github.com/danpune/tennis-slams-tracker"
@@ -434,15 +442,17 @@ const av=p=>{if(!p||!p.n||isTBD(p.n))return"";
  return p.i?'<img class="av'+(ph?" avc":"")+'" loading="lazy" src="'+esc(ph?ph.u:"https://a.espncdn.com/i/headshots/tennis/players/full/"+p.i+".png")+'" alt="'+esc(p.n||"")+'" title="'+esc(p.n||"")+'" data-pid="'+esc(p.i)+'" data-ini="'+ini+'" role="button" tabindex="0" onerror="this.replaceWith(Object.assign(document.createElement(&quot;span&quot;),{className:this.className+&quot; avi&quot;,textContent:this.dataset.ini}))">'
   :'<span class="av avi">'+ini+"</span>";};
 function dlg(d){ /* Escape must close any full-screen overlay we can open by keyboard */
+ const back=document.activeElement,rm=d.remove.bind(d);
+ d.remove=()=>{rm();if(back&&back.isConnected&&back.focus)back.focus();};   /* every close path calls remove() */
  d.tabIndex=-1;d.setAttribute("role","dialog");d.setAttribute("aria-modal","true");
  d.addEventListener("keydown",e=>{if(e.key==="Escape")d.remove();});
  document.body.appendChild(d);d.focus();
 }
 function showLB(im){
  const d=document.createElement("div");d.className="lb";
- const ph=PH[im.dataset.pid];
+ const ph=PH[im.dataset.pid],web=u=>/^https?:\/\//i.test(u||"");   /* Commons metadata is editable by anyone */
  d.innerHTML='<img src="'+esc(ph?ph.f.replace("/wiki/File:","/wiki/Special:FilePath/")+"?width=480":im.src)+'" alt="">'+(im.alt?'<div class="lbn">'+esc(im.alt)+"</div>":"")
-  +(ph?'<div class="lbc">Photo: <a href="'+esc(ph.f)+'" target="_blank" rel="noopener">'+esc(ph.a||"Wikimedia Commons")+"</a> · "+(ph.lu?'<a href="'+esc(ph.lu)+'" target="_blank" rel="noopener">'+esc(ph.l)+"</a>":esc(ph.l))+" · via Wikimedia Commons</div>":"");
+  +(ph?'<div class="lbc">Photo: '+(web(ph.f)?'<a href="'+esc(ph.f)+'" target="_blank" rel="noopener">'+esc(ph.a||"Wikimedia Commons")+"</a>":esc(ph.a||"Wikimedia Commons"))+" · "+(web(ph.lu)?'<a href="'+esc(ph.lu)+'" target="_blank" rel="noopener">'+esc(ph.l)+"</a>":esc(ph.l))+" · via Wikimedia Commons</div>":"");
  d.addEventListener("click",()=>d.remove());
  dlg(d);
 }
@@ -687,13 +697,15 @@ function renderHL(){
 async function boot(){
  renderCount();renderSlams();renderHL();renderMine();
  let champs=[];
- try{const r=await fetch("photos.json?t="+Date.now(),{cache:"no-store"});if(r.ok)PH=(await r.json()).photos||{};}catch(e){}
- try{const r=await fetch("champions.json?t="+Date.now(),{cache:"no-store"});if(r.ok)champs=(await r.json()).champions||[];}catch(e){}
- try{const r=await fetch("highlights.json?t="+Date.now(),{cache:"no-store"});if(r.ok)HL=(await r.json()).highlights||{};}catch(e){}
- try{const r=await fetch("editions.json?t="+Date.now(),{cache:"no-store"});if(r.ok){EDITIONS=(await r.json()).editions||[];renderSlams();}}catch(e){}
+ /* all five in parallel, then applied in the same order as before; each fails alone */
+ const get=f=>fetch(f+"?t="+Date.now(),{cache:"no-store"}).then(r=>r.ok?r.json():null).catch(()=>null);
+ const [ph,ch,hl,ed,dj]=await Promise.all(["photos.json","champions.json","highlights.json","editions.json","data.json"].map(get));
+ if(ph)PH=ph.photos||{};
+ if(ch)champs=ch.champions||[];
+ if(hl)HL=hl.highlights||{};
+ try{if(ed){EDITIONS=ed.editions||[];renderSlams();}}catch(e){}
  try{
-  const r=await fetch("data.json?t="+Date.now(),{cache:"no-store"});
-  if(r.ok){DATA=await r.json();
+  if(dj){DATA=dj;
    stampUpd();
    collectPlayers();
    if(DATA.slams.length){
@@ -705,7 +717,10 @@ async function boot(){
        rankings, odds and the calendar link beside each match. ponytail: flat count,
        raise the 4 if the business end should start sooner. */
     const vt=venueToday();
-    if(DATA.slams[0].draws.reduce((n,d)=>n+d.matches.filter(m=>m.date&&venueDay(m.date)===vt).length,0)>=4)curDraw="today";
+    const todays=DATA.slams[0].draws.flatMap((d,i)=>d.matches.filter(m=>m.date&&venueDay(m.date)===vt).map(m=>({i,m})));
+    if(todays.length>=4)curDraw="today";
+    else{const nx=todays.filter(x=>!x.m.done).sort((x,y)=>Date.parse(x.m.date)-Date.parse(y.m.date))[0];
+     if(nx){curDraw=nx.i;curRound=nx.m.round;}}   /* finals day: open on the final being played, not yesterday's semi */
     const linked=hashView();   /* a shared link beats the default */
     renderBrief(DATA.slams[0]);renderChamps(DATA.slams[0]);renderMatches();
     /* while a Slam is running the live results lead; the majors row follows them */
@@ -735,7 +750,7 @@ let liveTimer=null, liveAt=0, liveBusy=null;
 function stampUpd(){
  const el=document.getElementById("upd");if(!el||!DATA)return;
  const ref=Math.max(liveAt,DATA.updated?Date.parse(DATA.updated):0),age=Date.now()-ref;
- if(age>LIVE_STALE_MS){const hh=Math.floor(age/36e5),mm=Math.round(age%36e5/6e4);
+ if(age>LIVE_STALE_MS){const t=Math.round(age/6e4),hh=Math.floor(t/60),mm=t%60;   /* never "1h 60m" */
   el.innerHTML='<span class="stale">⚠ scores may be delayed — updated '+(hh?hh+"h ":"")+mm+"m ago</span>";}
  else el.textContent="updated "+new Date(ref).toLocaleTimeString()+(liveAt>=ref?" — live from the feed":"");
 }
@@ -757,7 +772,8 @@ async function refreshLiveOnce(){
  if(!DATA||!DATA.slams.length)return 0;
  const slam=DATA.slams[0],now=Date.now();
  if(now<Date.parse(slam.start)-864e5||now>Date.parse(slam.end)+864e5)return 0;
- const anyLive=slam.draws.some(d=>d.matches.some(m=>!m.done&&/progress/i.test(m.state||"")));
+ const anyLive=slam.draws.some(d=>d.matches.some(m=>!m.done&&(/progress/i.test(m.state||"")
+   ||(m.date&&Date.parse(m.date)<=now&&!timeTBD(m.date)&&!isTBD(m.a.n)&&!isTBD(m.b.n)))));   /* due = probably live */
  const built=DATA.updated?Date.parse(DATA.updated):0;
  if(now-Math.max(liveAt,built)<(anyLive?LIVE_POLL_MS:LIVE_STALE_MS))return 0;
  let feed;

@@ -18,7 +18,9 @@ updated = datetime.strptime(d["updated"], "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=t
 assert updated <= now, f"updated is in the future: {d['updated']}"
 
 slams = d.get("slams") or []
-assert slams, "no slams at all — refusing to publish an empty file"
+# Between Slams the feed carries no tournament — that is normal, and the file still
+# carries the rankings. Only a file with neither is empty.
+assert slams or (d.get("rankings") or {}).get("atp"), "no slams and no rankings — refusing to publish an empty file"
 
 matches = []
 for s in slams:
@@ -29,7 +31,7 @@ for s in slams:
         assert dr.get("matches") is not None, f"draw {dr.get('draw')} has no matches list"
         matches += dr["matches"]
 
-assert matches, "slams present but not one match between them"
+assert matches or not slams, "slams present but not one match between them"
 
 # 2. identity: a duplicate id silently merges two matches in the UI
 ids = [m["id"] for m in matches if m.get("id")]

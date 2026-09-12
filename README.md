@@ -17,9 +17,9 @@ playbook (static page + scheduled fetch committing JSON snapshots), independent 
 | | |
 |---|---|
 | 🗓️ **Four-majors cards** | Multi-year dates with auto-rollover; completed editions show their champions — tap for a full **"how it was won"** panel (QF → F, every draw, real scores) |
-| 🎾 **Live results** | All five draws with per-set scores, round chips, and a 📋 **All days** view — the whole tournament day by day |
+| 🎾 **Live results** | All five draws with per-set scores and round chips, a 🏆 **Bracket** (quarterfinals on), 🔴 **Today's order of play** by court, and 📋 **All days** — every view has its own shareable link (`#bracket`, `#today`, …) |
 | ▶️ **Official highlights** | Every finished singles match links to the tournament's own YouTube clip, plus a day-by-day gallery with tap-to-play embeds — kept permanently, so past Slams stay watchable between tournaments |
-| 👤 **Players** | Photos (click to zoom), world ranking on every match row, and click any name for their **path through the Slam** |
+| 👤 **Players** | Photos for singles and doubles (ESPN, or freely licensed Wikimedia Commons — tap for credit), world ranking on every match and in the bracket, and click any name for their **path through the Slam** |
 | 🕐 **Timezones & calendar** | See match times in your zone, the venue's, or a friend's; one-tap Google/iCal adds per match |
 | 📈 **Win odds** | Polymarket match-winner prices on upcoming matches (informational only, not betting advice) |
 | ⭐ **Follow** | Star players & countries — stored only in your browser |
@@ -33,11 +33,13 @@ flowchart LR
         ESPN["ESPN public tennis feed<br/>scores · draws · rankings"]
         PM["Polymarket gamma API<br/>match-winner prices"]
         YT["Official YouTube channels<br/>@Wimbledon · @usopen · …"]
+        WM["Wikidata + Wikimedia Commons<br/>freely licensed player photos"]
     end
 
     subgraph actions ["GitHub Actions — every 30 min"]
         F["fetch_data.py"]
         H["build_highlights.py<br/>oEmbed-verified official clips"]
+        P["build_photos.py<br/>matched by ESPN id, credited"]
     end
 
     subgraph repo ["Committed JSON snapshots"]
@@ -45,6 +47,7 @@ flowchart LR
         C["champions.json<br/>(evergreen roll of honour)"]
         E["editions.json<br/>(completed Slams, QF→F)"]
         HL["highlights.json<br/>(verified clip + match context)"]
+        PH["photos.json<br/>(player id → licensed photo)"]
     end
 
     Pages["GitHub Pages<br/>index.html — one file,<br/>inline CSS + vanilla JS"]
@@ -54,8 +57,10 @@ flowchart LR
     PM --> F
     YT --> H
     F --> D & C & E
+    WM --> P
     H --> HL
-    D & C & E & HL --> Pages --> B
+    P --> PH
+    D & C & E & HL & PH --> Pages --> B
 ```
 
 The page is **static**; all data work happens in the scheduled fetch. The live feed only
@@ -75,7 +80,8 @@ business end to `editions.json`. Those files are the site's permanent memory.
   `author_name` is spoofable; the URL isn't.
 - **Privacy as a feature.** No cookies, analytics, accounts or tracking. The browser's
   only external requests are player photos (ESPN, Wikimedia Commons), highlight thumbnails (YouTube,
-  embeds load on tap via the cookie-less domain) and one anonymous visit-counter ping.
+  embeds load on tap via the cookie-less domain), ESPN's public scoreboard (only during a Slam,
+  when the saved snapshot is behind) and one anonymous visit-counter ping.
 - **Boring on purpose.** One HTML file, system fonts, no framework, no build. The whole
   site can be read in one sitting and hosted anywhere.
 
@@ -105,8 +111,6 @@ re-uploaded here — highlights link or embed from the tournaments' own channels
 
 ## Roadmap
 
-- Visual bracket tree (QF onward) — the "how it was won" panel covers the substance today
-- Order-of-play "today" view during Slams
 - 2028 dates as tournaments announce them
 
 ## License

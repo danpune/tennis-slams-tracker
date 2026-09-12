@@ -20,6 +20,9 @@ from concurrent.futures import ThreadPoolExecutor
 
 UA = {"User-Agent": "TennisSlamTracker/1.0 (https://github.com/danpune/tennis-slams-tracker)"}
 TENNIS_PLAYER = "Q10833314"
+SAFE_IMG = re.compile(r"https://(upload|thumb)\.wikimedia\.org/")
+SAFE_FILE = re.compile(r"https://commons\.wikimedia\.org/wiki/File:")
+SAFE_LIC = re.compile(r"https?://creativecommons\.org/")
 
 def get(url, accept="application/json"):
     req = urllib.request.Request(url, headers={**UA, "Accept": accept})
@@ -101,9 +104,14 @@ def commons_info(files):
                 continue
             author = re.sub(r"<[^>]+>", "", html.unescape((md.get("Artist") or {}).get("value", ""))).strip()
             title = page["title"]
+            u, f = ii.get("thumburl", ""), ii.get("descriptionurl", "")
+            lu = (md.get("LicenseUrl") or {}).get("value", "")
+            # these strings reach src/href on the page, and Commons pages are editable by
+            # anyone: accept only Wikimedia's own image/file URLs and a Creative Commons link
+            if not (SAFE_IMG.match(u) and SAFE_FILE.match(f)):
+                continue
             out[norm.get(title, title)[5:]] = {
-                "u": ii["thumburl"], "a": author[:80], "l": lic,
-                "lu": (md.get("LicenseUrl") or {}).get("value", ""), "f": ii["descriptionurl"]}
+                "u": u, "a": author[:80], "l": lic, "lu": lu if SAFE_LIC.match(lu) else "", "f": f}
     return out
 
 def espn_names(ids):
