@@ -677,6 +677,12 @@ async function boot(){
     document.getElementById("livewrap").style.display="";
     document.getElementById("livehead").innerHTML="🎾 <b>"+esc(DATA.slams[0].name)+"</b> — every draw, every result";
     document.getElementById("tzsel").value=TZ;document.getElementById("tzname").textContent=tzLabel();
+    /* Open on the order of play while there is a real day of play to show. The last
+       few days carry 1-3 matches and read far better as the round view, which keeps
+       rankings, odds and the calendar link beside each match. ponytail: flat count,
+       raise the 4 if the business end should start sooner. */
+    const vt=venueToday();
+    if(DATA.slams[0].draws.reduce((n,d)=>n+d.matches.filter(m=>m.date&&venueDay(m.date)===vt).length,0)>=4)curDraw="today";
     renderBrief(DATA.slams[0]);renderChamps(DATA.slams[0]);renderMatches();
     /* while a Slam is running the live results lead; the majors row follows them */
     document.getElementById("livewrap").after(document.getElementById("majorshead"),
