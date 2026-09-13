@@ -103,6 +103,15 @@
 {
 "year": 2026,
 "slam": "US Open",
+"draw": "Men's Singles",
+"champion": "Alexander Zverev",
+"champC": "GER",
+"runnerUp": "Ben Shelton",
+"runnerC": "USA"
+},
+{
+"year": 2026,
+"slam": "US Open",
 "draw": "Mixed Doubles",
 "champion": "K. Muchova / J. Mensik",
 "champC": "",
