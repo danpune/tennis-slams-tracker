@@ -8,6 +8,7 @@ a silently bad commit does not.
 Exits non-zero on failure, so the workflow stops before publishing bad data.
 """
 import json
+import subprocess
 from datetime import datetime, timezone
 
 d = json.load(open("data.json"))
@@ -65,6 +66,31 @@ for m in matches:
 stamp = now.strftime("%Y-%m-%dT%H:%MZ")
 future = [m["id"] for m in matches if m.get("done") and m.get("date", "") > stamp]
 assert not future, f"{len(future)} finished matches dated in the future, e.g. {future[0]}"
+
+# 5. completeness, not just shape. Every gate here checks the data is WELL-FORMED; a
+#    partial upstream failure produces well-formed data that is missing most of itself,
+#    and sails through. Compare against the build we are replacing and refuse a sudden
+#    collapse: a Slam that vanished mid-tournament, or a draw that lost its matches.
+prev = None
+try:
+    prev = json.loads(subprocess.run(["git", "show", "HEAD:data.json"], check=True,
+                                     capture_output=True, text=True).stdout)
+except Exception:
+    pass                      # no previous build to compare with (first run, or no git)
+if prev:
+    def bydraw(doc):
+        return {(s["name"], dr["draw"]): len(dr["matches"])
+                for s in doc.get("slams") or [] for dr in s.get("draws") or []}
+    old, new = bydraw(prev), bydraw(d)
+    for s in prev.get("slams") or []:
+        # a Slam only disappears legitimately once it is over and ESPN drops it
+        ended = s.get("end", "") < now.strftime("%Y-%m-%dT%H:%MZ")
+        assert ended or any(x["name"] == s["name"] for x in slams), \
+            f"{s['name']} vanished from the feed but its end date has not passed"
+    lost = {k: (old[k], new[k]) for k in old if k in new and new[k] < old[k] * 0.9}
+    assert not lost, f"draws lost more than 10% of their matches: {lost}"
+    gone = [k for k in old if k not in new and any(x["name"] == k[0] for x in slams)]
+    assert not gone, f"draws disappeared from a Slam still in the feed: {gone}"
 
 done = sum(1 for m in matches if m.get("done"))
 print(f"all checks passed — {len(slams)} slam(s), {len(matches)} matches "

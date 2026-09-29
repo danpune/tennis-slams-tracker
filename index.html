@@ -284,6 +284,15 @@ const SLAMS=[
 ];
 /* current-or-next edition; null => all known editions are past (show "dates TBA") */
 function nextEd(s){const now=Date.now();return s.eds.find(e=>Date.parse(e.end)+864e5>=now)||null;}
+/* Main-draw window read off the feed itself, for a Slam SLAMS has no dates for yet —
+   the qualifying rounds are excluded, so it agrees with SLAMS[].eds.main/end rather
+   than with ESPN's qualifying-inclusive start/end. Real data, nothing invented. */
+function feedMain(slam){
+ const ds=(slam&&slam.draws||[]).flatMap(d=>d.matches.filter(m=>m.date&&!/^qualif/i.test(m.round||""))
+   .map(m=>Date.parse(m.date))).filter(n=>n);
+ if(!ds.length)return null;
+ const day=t=>{const d=new Date(t);return Date.UTC(d.getUTCFullYear(),d.getUTCMonth(),d.getUTCDate());};
+ return{main:day(Math.min.apply(null,ds)),end:day(Math.max.apply(null,ds))};}
 const fmtD=iso=>new Date(iso+"T12:00:00Z").toLocaleDateString(undefined,{month:"short",day:"numeric"});
 const fmtDY=iso=>new Date(iso+"T12:00:00Z").toLocaleDateString(undefined,{month:"short",day:"numeric",year:"numeric"});
 function gcal(s,e){const d0=e.start.replace(/-/g,""),d1=new Date(Date.parse(e.end+"T12:00:00Z")+864e5).toISOString().slice(0,10).replace(/-/g,"");
@@ -299,6 +308,13 @@ function renderCount(){
  if(running){el.style.display="";
   const dn=Math.floor((now-Date.parse(running.e.main+"T00:00:00Z"))/864e5)+1;
   el.innerHTML='<span class="to">🔴 IN PROGRESS</span><span class="ev">'+running.s.flag+" "+esc(running.s.name)+" "+running.e.label+'</span><span class="big">Day '+dn+'</span><span class="to">through '+fmtD(running.e.end)+"</span>";
+  return;}
+ /* the feed says a Slam is on but SLAMS has no edition for it (dates not published yet):
+    count the days from the feed rather than dropping the countdown mid-tournament */
+ const lv=DATA&&DATA.slams&&DATA.slams[0],lw=lv?feedMain(lv):null;
+ if(lw&&now>=lw.main&&now<=lw.end+864e5){el.style.display="";
+  const meta=SLAMS.find(x=>normSlam(x.name)===normSlam(lv.name))||{flag:"🎾"};
+  el.innerHTML='<span class="to">🔴 IN PROGRESS</span><span class="ev">'+meta.flag+" "+esc(lv.name)+" "+new Date(lw.main).getUTCFullYear()+'</span><span class="big">Day '+(Math.floor((now-lw.main)/864e5)+1)+'</span><span class="to">through '+fmtD(new Date(lw.end).toISOString().slice(0,10))+"</span>";
   return;}
  const up=SLAMS.map(s=>({s,e:nextEd(s)})).filter(x=>x.e&&Date.parse(x.e.main+"T15:00:00Z")>now)
    .sort((a,b)=>Date.parse(a.e.main)-Date.parse(b.e.main))[0];
@@ -642,7 +658,8 @@ function renderBrief(slam){
  if(!(now>=start-864e5&&now<=end+2*864e5)){el.style.display="none";return;}   /* only while the Slam runs */
  const md=(SLAMS.find(x=>normSlam(x.name)===normSlam(slam.name))||{eds:[]}).eds
    .find(e=>Date.parse(e.end)+864e5>=start&&Date.parse(e.start)-864e5<=end);
- const mainStart=md?Date.parse(md.main+"T00:00:00Z"):start,mainEnd=md?Date.parse(md.end+"T00:00:00Z"):end;
+ const fw=md?null:feedMain(slam);   /* SLAMS behind the feed: use the feed's own main draw, not ESPN's qualifying-inclusive window */
+ const mainStart=md?Date.parse(md.main+"T00:00:00Z"):(fw?fw.main:start),mainEnd=md?Date.parse(md.end+"T00:00:00Z"):(fw?fw.end:end);
  const total=Math.round((mainEnd-mainStart)/864e5)+1,day=Math.min(total,Math.max(1,Math.floor((now-mainStart)/864e5)+1));
  const lines=[];
  const short=nm=>nm.split(" / ").length>1?nm.split(" / ").map(x=>x.split(" ").pop()).join("/"):nm;
