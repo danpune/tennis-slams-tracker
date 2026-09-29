@@ -49,7 +49,7 @@ h2 b{color:var(--acc)}
 .chip{border:1px solid var(--line);background:none;color:var(--text);border-radius:999px;padding:7px 14px;font-size:13px;cursor:pointer}
 .chip.on{background:var(--acc);color:#fff;border-color:var(--acc);font-weight:700}
 .chip.star{border-color:#d8c88f}
-.chip.star.on{background:var(--star);border-color:var(--star);color:#fff}
+.chip.star.on{background:#8a6408;border-color:#8a6408;color:#fff} /* not var(--star): 3.80:1 there, 5.37:1 here */
 .match{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:10px 14px;margin-bottom:8px;display:flex;gap:12px;align-items:center}
 .match .who{flex:1;min-width:0}
 .row{display:flex;justify-content:space-between;gap:10px;font-size:15px;padding:3px 0;align-items:center}
@@ -101,7 +101,7 @@ h2 b{color:var(--acc)}
 .avc{object-position:50% 20%}
 .avp{display:inline-flex;vertical-align:middle;margin-right:8px;flex:none}.avp .av{margin-right:0;box-shadow:0 0 0 2px var(--card)}.avp .av+.av{margin-left:-10px}
 @media (max-width:560px){#matches .avp .av,#path .avp .av{width:24px;height:24px}#matches .avp .av+.av,#path .avp .av+.av{margin-left:-10px}.avp{margin-right:4px}} /* two faces, less width on phones */
-.avi{display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;color:#fff;background:#8fa596;cursor:default}
+.avi{display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;color:#fff;background:#4f6557;cursor:default} /* 6.0:1 on white text */
 .b-done{background:#e3efdd;color:var(--acc)}
 .slam.done{cursor:pointer}.slam.done:hover{border-color:var(--acc)}
 .edd{border-top:1px solid var(--line);padding:8px 0}
@@ -132,7 +132,7 @@ h2 b{color:var(--acc)}
 .path .pr b{min-width:110px;color:var(--muted);font-weight:700;font-size:12.5px}
 .path .pr .wl{min-width:18px;font-weight:800}.path .pr .wl.W{color:var(--acc)}.path .pr .wl.L{color:#b23414}
 .path .pr .sc{font-variant-numeric:tabular-nums;color:var(--muted);white-space:nowrap}
-.rohc .who .av{width:26px;height:26px;margin-right:5px}
+.rohc .who .av{width:32px;height:32px;margin-right:5px}
 @media (max-width:560px){ .path .pr b{flex:0 0 100%;min-width:0}.path .pr{gap:4px 8px}
  .chip{padding:10px 15px}.mcal{padding:8px 10px;display:inline-block;margin-top:5px}.tzrow select{padding:8px 10px}
  /* names were ellipsing to "Danie...": the name column is starved by the right-hand
@@ -293,9 +293,11 @@ function ics(s,e){const d0=e.start.replace(/-/g,""),d1=new Date(Date.parse(e.end
  return "data:text/calendar;charset=utf-8,"+encodeURIComponent(v);}
 function renderCount(){
  const now=Date.now(),el=document.getElementById("count");
- const running=SLAMS.map(s=>({s,e:nextEd(s)})).find(x=>x.e&&now>=Date.parse(x.e.start)&&now<=Date.parse(x.e.end)+864e5);
+ /* the main draw, not qualifying, is "in progress" — otherwise the countdown vanishes
+    for the whole qualifying week and every day of it reads "Day 1" */
+ const running=SLAMS.map(s=>({s,e:nextEd(s)})).find(x=>x.e&&now>=Date.parse(x.e.main+"T00:00:00Z")&&now<=Date.parse(x.e.end)+864e5);
  if(running){el.style.display="";
-  const dn=Math.max(1,Math.floor((now-Date.parse(running.e.main+"T00:00:00Z"))/864e5)+1);
+  const dn=Math.floor((now-Date.parse(running.e.main+"T00:00:00Z"))/864e5)+1;
   el.innerHTML='<span class="to">🔴 IN PROGRESS</span><span class="ev">'+running.s.flag+" "+esc(running.s.name)+" "+running.e.label+'</span><span class="big">Day '+dn+'</span><span class="to">through '+fmtD(running.e.end)+"</span>";
   return;}
  const up=SLAMS.map(s=>({s,e:nextEd(s)})).filter(x=>x.e&&Date.parse(x.e.main+"T15:00:00Z")>now)
@@ -314,19 +316,21 @@ function renderSlams(){
    const champ=d=>{const dr=done.draws.find(x=>x.draw===d);const f=dr&&dr.matches.find(m=>m.done&&m.round==="Final");
     if(!f)return null;const w=winSide(f);return w?w.n:null;};
    const cm=champ("Men's Singles"),cw=champ("Women's Singles"),e2=nextEd(s);
-   return '<div class="slam done" data-ed="'+esc(done.year+"|"+done.name)+'" role="button" tabindex="0"><div><span class="badge b-done">✓ Completed</span></div><div class="nm">'+s.flag+" "+esc(s.name)+" "+done.year+'</div><div class="meta">'+esc(s.venue)+" · "+s.surface+'</div><div class="dates">🏆 '+esc(cm||"")+(cw?" · "+esc(cw):"")+'</div><div class="note">Tap for winners &amp; results'+(e2?" · next: "+fmtD(e2.start)+" – "+fmtDY(e2.end):"")+"</div></div>";
+   return '<div class="slam done" data-ed="'+esc(done.year+"|"+done.name)+'" role="button" tabindex="0"><div><span class="badge b-done">✓ Completed</span></div><div class="nm">'+s.flag+" "+esc(s.name)+" "+done.year+'</div><div class="meta">'+esc(s.venue)+" · "+s.surface+'</div><div class="dates">🏆 '+esc(cm||"")+(cw?" · "+esc(cw):"")+'</div><div class="note">Tap for winners &amp; results'+(e2?" · next: "+fmtD(e2.start)+" – "+fmtDY(e2.end):"")+"</div>"
+    +(e2?'<div><a class="cal" target="_blank" rel="noopener" href="'+gcal(s,e2)+'">📅 Gcal</a><a class="cal" href="'+ics(s,e2)+'" download="'+esc(s.name).replace(/\s/g,"")+e2.label+'.ics">📅 iCal</a></div>':"")+"</div>";
   }
   const e=nextEd(s);
   if(!e){const y=+s.eds[s.eds.length-1].label+1;
    return '<div class="slam"><div><span class="badge b-tba">DATES TBA</span></div><div class="nm">'+s.flag+" "+esc(s.name)+" "+y+'</div><div class="meta">'+esc(s.venue)+" · "+s.surface+'</div><div class="dates">Dates to be announced</div></div>';}
   const t0=Date.parse(e.start),t1=Date.parse(e.end)+864e5;
-  const[cls,lab]=now>=t0&&now<=t1?["b-live","IN PROGRESS"]:(Date.parse(e.main)===nextMain?["b-next","NEXT UP"]:["b-soon","UPCOMING"]);
+  const tm=Date.parse(e.main+"T00:00:00Z");
+ const[cls,lab]=now>=tm&&now<=t1?["b-live","IN PROGRESS"]:now>=t0&&now<tm?["b-soon","QUALIFYING"]:(Date.parse(e.main)===nextMain?["b-next","NEXT UP"]:["b-soon","UPCOMING"]);
   return '<div class="slam"><div><span class="badge '+cls+'">'+lab+'</span></div><div class="nm">'+s.flag+" "+esc(s.name)+" "+e.label+'</div><div class="meta">'+esc(s.venue)+" · "+s.surface+'</div><div class="dates">'+fmtD(e.start)+" – "+fmtDY(e.end)+'</div><div><a class="cal" target="_blank" rel="noopener" href="'+gcal(s,e)+'">📅 Gcal</a><a class="cal" href="'+ics(s,e)+'" download="'+esc(s.name).replace(/\s/g,"")+e.label+'.ics">📅 iCal</a></div></div>';
  }).join("");
 }
 /* ── follow players & countries (localStorage, device-only) ── */
 let FOLLOW={p:[],c:[]};
-try{FOLLOW=Object.assign(FOLLOW,JSON.parse(localStorage.getItem("gs_follow")||"{}"));}catch(e){}
+try{FOLLOW=Object.assign(FOLLOW,JSON.parse(localStorage.getItem("gs_follow")||"{}"));}catch(e){console.error('render failed',e);}
 const saveF=()=>localStorage.setItem("gs_follow",JSON.stringify(FOLLOW));
 const isF=p=>FOLLOW.p.includes(p.n)||(p.c&&FOLLOW.c.includes(p.c));
 let EDITIONS=[];
@@ -335,13 +339,19 @@ let PLAYERS={},PIDX={}; /* name -> {n,c,cn} / name -> espn id, from rankings + d
 let COUNTRIES={}; /* code -> name */
 const COUNTRY_SEED={USA:"United States",IND:"India",GBR:"Great Britain",ESP:"Spain",ITA:"Italy",FRA:"France",GER:"Germany",SER:"Serbia",RUS:"Russia",AUS:"Australia",CAN:"Canada",POL:"Poland",BLR:"Belarus",CZE:"Czechia",GRE:"Greece",NOR:"Norway",DEN:"Denmark",SUI:"Switzerland",AUT:"Austria",NED:"Netherlands",BEL:"Belgium",ARG:"Argentina",BRA:"Brazil",CHI:"Chile",JPN:"Japan",CHN:"China",KAZ:"Kazakhstan",TUN:"Tunisia",RSA:"South Africa",CRO:"Croatia",BUL:"Bulgaria",HUN:"Hungary",POR:"Portugal",SWE:"Sweden",FIN:"Finland",UKR:"Ukraine",ROM:"Romania",COL:"Colombia",MEX:"Mexico",KOR:"South Korea"};
 function collectPlayers(){
- PLAYERS={};PIDX={};COUNTRIES=Object.assign({},COUNTRY_SEED,DATA?.countries||{});
+ /* seed wins: ESPN's flag.alt is "USA", the seed's "United States" is what people type */
+ PLAYERS={};PIDX={};COUNTRIES=Object.assign({},DATA?.countries||{},COUNTRY_SEED);
  const add=p=>{if(p&&p.n&&!isTBD(p.n)){PLAYERS[p.n]={n:p.n,c:p.c||"",cn:p.cn||""};if(p.i)PIDX[p.n]=p.i;if(p.c)COUNTRIES[p.c]=COUNTRIES[p.c]||p.cn||p.c;}};
  (DATA?.slams||[]).forEach(s=>s.draws.forEach(dr=>dr.matches.forEach(m=>{
    /* doubles teams arrive as "A / B" — index both halves too */
    [m.a,m.b].forEach(side=>{add(side);(side.n||"").split(" / ").forEach(nm=>{if(nm&&nm!==side.n)add({n:nm.trim(),c:side.c,cn:side.cn});});});
  })));
  Object.values(DATA?.rankings||{}).forEach(list=>list.forEach(x=>add({n:x.name,i:x.i,c:x.c,cn:x.cn})));
+ /* between Slams the draws are empty — champions and archived players are all the page
+    shows, and they were not searchable at all */
+ CHAMPS.forEach(c=>{add({n:c.champion,c:c.champC});add({n:c.runnerUp,c:c.runnerC});});
+ EDITIONS.forEach(e=>e.draws.forEach(dr=>dr.matches.forEach(m=>[m.a,m.b].forEach(side=>{
+  add(side);(side.n||"").split(" / ").forEach((nm,k)=>{if(nm&&nm!==side.n)add({n:nm.trim(),i:(side.ids||[])[k],c:side.c,cn:side.cn});});}))));
 }
 function renderMine(){
  document.getElementById("fmine").innerHTML=
@@ -416,7 +426,7 @@ function icsM(m,slam){const t0=Date.parse(m.date),t1=t0+150*60000;
  const v=["BEGIN:VCALENDAR","VERSION:2.0","PRODID:grandslams","BEGIN:VEVENT","UID:"+zstamp(t0)+(m.a.n+m.b.n).replace(/\W/g,"")+"@grandslams","DTSTART:"+zstamp(t0),"DTEND:"+zstamp(t1),"SUMMARY:"+(m.a.n+" v "+m.b.n+" 🎾 "+slam.name).replace(/,/g,""),"DESCRIPTION:"+(m.round||"")+" - scheduled start; length varies","END:VEVENT","END:VCALENDAR"].join("\r\n");
  return "data:text/calendar;charset=utf-8,"+encodeURIComponent(v);}
 /* ── live slam results ── */
-let DATA=null,HL={},PH={},curDraw=0,curRound=null,follOnly=false,HLALL=false;
+let DATA=null,HL={},PH={},CHAMPS=[],curDraw=0,curRound=null,follOnly=false,HLALL=false;
 /* the view lives in the URL so it can be shared/bookmarked: #bracket, #today, #all-days, #mens-singles … */
 const HASHV={brk:"bracket",today:"today",all:"all-days"},slug=s=>s.toLowerCase().replace(/'/g,"").replace(/\W+/g,"-");
 const viewHash=()=>HASHV[curDraw]||slug(DATA.slams[0].draws[curDraw].draw);
@@ -519,14 +529,18 @@ function renderHLGal(){
  /* live matches give the freshest context; highlights.json carries its own copy so the
     gallery survives after the feed drops a finished Slam */
  const live={};
+ /* EDITIONS first, the running Slam last (it wins): a stored caption can predate a fix —
+    Wimbledon's clips were captioned before tiebreaks were captured */
+ EDITIONS.forEach(e=>e.draws.forEach(dr=>dr.matches.forEach(m=>{
+  if(m.done&&HL[m.id])live[m.id]={m,dr:dr.draw,sl:e.name};})));
  (DATA?.slams||[]).forEach(s=>s.draws.forEach(dr=>dr.matches.forEach(m=>{
   if(m.done&&HL[m.id])live[m.id]={m,dr:dr.draw,sl:s.name};})));
  let items=Object.entries(HL).map(([id,h])=>{
   const L=live[id];
   if(L&&winSide(L.m)){const w=winSide(L.m),l=w===L.m.a?L.m.b:L.m.a;
    const gw=sets(w,l),gl=sets(l,w);
-   return {yt:h.yt,w:w.n,l:l.n,sc:gw.map((v,k)=>v+"-"+(gl[k]??"")).join(" "),dr:L.dr,rd:L.m.round,d:L.m.date,sl:L.sl};}
-  return h.w?{yt:h.yt,w:h.w,l:h.l,sc:h.sc||"",dr:h.dr||"",rd:h.rd||"",d:h.d||"",sl:h.sl||""}:null;
+   return {yt:h.yt,w:w.n,l:l.n,sc:gw.map((v,k)=>v+"-"+(gl[k]??"")).join(" "),st:L.m.state||"",dr:L.dr,rd:L.m.round,d:L.m.date,sl:L.sl};}
+  return h.w?{yt:h.yt,w:h.w,l:h.l,sc:h.sc||"",st:h.st||"",dr:h.dr||"",rd:h.rd||"",d:h.d||"",sl:h.sl||""}:null;
  }).filter(Boolean);
  if(!items.length){wrap.style.display="none";return;}
  wrap.style.display="";
@@ -544,7 +558,7 @@ function renderHLGal(){
   const day=it.d?new Date(it.d).toLocaleDateString(undefined,{weekday:"long",month:"short",day:"numeric",timeZone:effTz()}):"";
   const lbl=[it.sl,day].filter(Boolean).join(" · ");
   const head=HLALL&&lbl&&lbl!==lastHead?(lastHead=lbl,'<div class="hday">'+esc(lbl)+"</div>"):"";
-  return head+'<button class="hcard" data-yt="'+esc(it.yt)+'" data-lab="'+esc(it.w+" d. "+it.l)+'"><img loading="lazy" src="https://i.ytimg.com/vi/'+esc(it.yt)+'/hqdefault.jpg" alt=""><div class="hm">'+esc(it.w)+" d. "+esc(it.l)+'</div><div class="hs">'+(it.sl?esc(it.sl)+" · ":"")+esc(it.dr)+" · "+esc(it.rd)+' · <span class="sc">'+esc(it.sc)+"</span></div></button>";
+  return head+'<button class="hcard" data-yt="'+esc(it.yt)+'" data-lab="'+esc(it.w+" d. "+it.l)+'"><img loading="lazy" src="https://i.ytimg.com/vi/'+esc(it.yt)+'/hqdefault.jpg" alt=""><div class="hm">'+esc(it.w)+" d. "+esc(it.l)+'</div><div class="hs">'+(it.sl?esc(it.sl)+" · ":"")+esc(it.dr)+" · "+esc(it.rd)+' · <span class="sc">'+esc(it.sc)+"</span>"+retag({state:it.st})+"</div></button>";
  }).join("")+(all>24?'<button class="chip" id="hlmore" style="grid-column:1/-1;justify-self:start;margin-top:10px">'+(HLALL?"Show top 24":"Show all "+all+" clips")+"</button>":"");
 }
 /* show courts the way an order-of-play board does: show courts first, then by number */
@@ -704,9 +718,9 @@ async function boot(){
  const get=f=>fetch(f+"?t="+Date.now(),{cache:"no-store"}).then(r=>r.ok?r.json():null).catch(()=>null);
  const [ph,ch,hl,ed,dj]=await Promise.all(["photos.json","champions.json","highlights.json","editions.json","data.json"].map(get));
  if(ph)PH=ph.photos||{};
- if(ch)champs=ch.champions||[];
+ if(ch)champs=CHAMPS=ch.champions||[];
  if(hl)HL=hl.highlights||{};
- try{if(ed){EDITIONS=ed.editions||[];renderSlams();}}catch(e){}
+ try{if(ed){EDITIONS=ed.editions||[];renderSlams();}}catch(e){console.error('render failed',e);}
  try{
   if(dj){DATA=dj;
    stampUpd();
@@ -733,7 +747,7 @@ async function boot(){
    }
    renderRanks();
   }
- }catch(e){}
+ }catch(e){console.error('render failed',e);}
  renderRoH(champs);renderHLGal();
 }
 /* ---------- client-side live refresh ----------
@@ -753,6 +767,11 @@ let liveTimer=null, liveAt=0, liveBusy=null;
 function stampUpd(){
  const el=document.getElementById("upd");if(!el||!DATA)return;
  const ref=Math.max(liveAt,DATA.updated?Date.parse(DATA.updated):0),age=Date.now()-ref;
+ /* between Slams there are no scores to be delayed: the build is just the rankings, and
+    the cron's normal multi-hour gaps would otherwise show a red warning most of the time */
+ if(!(DATA.slams||[]).length){const ru=DATA.rankupd||{},fd=s=>new Date(s+"T12:00:00Z").toLocaleDateString(undefined,{month:"short",day:"numeric"});
+  el.textContent=(ru.atp||ru.wta)?"world rankings · ATP "+fd(ru.atp||ru.wta)+" · WTA "+fd(ru.wta||ru.atp)
+   :"rankings updated "+new Date(ref).toLocaleDateString(undefined,{month:"short",day:"numeric"});return;}
  if(age>LIVE_STALE_MS){const t=Math.round(age/6e4),hh=Math.floor(t/60),mm=t%60;   /* never "1h 60m" */
   el.innerHTML='<span class="stale">⚠ scores may be delayed — updated '+(hh?hh+"h ":"")+mm+"m ago</span>";}
  else el.textContent="updated "+new Date(ref).toLocaleTimeString()+(liveAt>=ref?" — live from the feed":"");

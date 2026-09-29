@@ -22,6 +22,20 @@ slams = d.get("slams") or []
 # carries the rankings. Only a file with neither is empty.
 assert slams or (d.get("rankings") or {}).get("atp"), "no slams and no rankings — refusing to publish an empty file"
 
+# 1b. the rankings. Off-season they are the entire file and nothing below runs, so a
+#     feed-shape change (rank 0, name "?") would publish and sit there for months.
+#     Shape is only asserted when a list is present: a rankings outage mid-Slam must not
+#     block a score update, but an empty list off-season means there is nothing to publish.
+for tour in ("atp", "wta"):
+    rows = (d.get("rankings") or {}).get(tour) or []
+    assert rows or slams, f"{tour} top-10 is empty and no Slam is running"
+    if rows:
+        assert len(rows) == 10, f"{tour} top-10 has {len(rows)} rows"
+        assert [x.get("rank") for x in rows] == list(range(1, 11)), f"{tour} ranks are not 1..10"
+        assert all(x.get("name") and x["name"] != "?" for x in rows), f"{tour} has unnamed players"
+        assert all((x.get("points") or 0) > 0 for x in rows), f"{tour} has zero-point players"
+        assert len({x["name"] for x in rows}) == 10, f"{tour} repeats a player"
+
 matches = []
 for s in slams:
     for k in ("name", "start", "end", "draws"):

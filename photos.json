@@ -3169,15 +3169,6 @@
 "n": "Alexandre Muller",
 "how": "name"
 },
-"12328": {
-"u": "https://thumb.wikimedia.org/wikipedia/commons/thumb/6/6f/DJS_campe%C3%B3n_en_Estambul.jpg/120px-DJS_campe%C3%B3n_en_Estambul.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
-"a": "Tensionado",
-"l": "CC0",
-"lu": "http://creativecommons.org/publicdomain/zero/1.0/deed.en",
-"f": "https://commons.wikimedia.org/wiki/File:DJS_campe%C3%B3n_en_Estambul.jpg",
-"n": "David Jorda Sanchis",
-"how": "name"
-},
 "3512": {
 "u": "https://thumb.wikimedia.org/wikipedia/commons/thumb/d/d8/Cl%C3%A9ment_Tabur_%28cropped%29.jpg/120px-Cl%C3%A9ment_Tabur_%28cropped%29.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
 "a": "BugWarp",
@@ -3660,6 +3651,7 @@
 "12284",
 "12289",
 "12295",
+"12328",
 "1266",
 "1273",
 "1287",

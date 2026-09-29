@@ -88,15 +88,23 @@ def fetch_tour(tour, rankmap, dates=None):
             draws.append({"draw": gname, "matches": matches})
         nm = e.get("name", "")
         events.append({"tour": tour, "name": CANON.get(nm, nm), "start": e.get("date", ""),
-                       "end": e.get("endDate", ""), "venue": (e.get("venue") or {}).get("fullName", ""),
+                       "end": e.get("endDate", ""), "venue": (e.get("venue") or {}).get("displayName") or (e.get("venue") or {}).get("fullName", ""),
                        "draws": draws})
     return events
+
+RANK_DATES = {}
+
+def rank_date(tour):
+    """ESPN stamps each rankings list with the date it was published (weekly)."""
+    return RANK_DATES.get(tour, "")
 
 def fetch_rankings(tour):
     """Full ranking list (~150 deep) — top-10 is displayed, the rest ranks draw players."""
     d = get(f"{BASE}/{tour}/rankings")
+    block = (d.get("rankings") or [{}])[0]
+    RANK_DATES[tour] = (block.get("update") or d.get("lastUpdated") or "")[:10]
     out = []
-    for x in (d.get("rankings") or [{}])[0].get("ranks") or []:
+    for x in block.get("ranks") or []:
         a = x.get("athlete") or {}
         code, cname = country(a)
         out.append({"rank": int(x.get("current", 0)), "name": a.get("displayName", "?"),
@@ -252,6 +260,26 @@ def update_champions(slams):
             json.dump(doc, f, ensure_ascii=False, indent=0)
     return added
 
+def file_age_h(path="data.json"):
+    """Hours since the served build. Off-season we still refresh it every 6h so `updated`
+    stays meaningful for stale_exit() and for the page."""
+    try:
+        upd = json.load(open(path, encoding="utf-8"))["updated"]
+        return (datetime.now(timezone.utc) - datetime.strptime(upd, "%Y-%m-%dT%H:%M:%SZ")
+                .replace(tzinfo=timezone.utc)).total_seconds() / 3600
+    except Exception:
+        return 1e9
+
+def unchanged_but_timestamp(out, path="data.json"):
+    """True when the only difference from the file on disk is the `updated` stamp."""
+    try:
+        old = json.load(open(path, encoding="utf-8"))
+    except Exception:
+        return False
+    a, b = dict(old), dict(out)
+    a.pop("updated", None), b.pop("updated", None)
+    return a == b
+
 def stale_exit(hours=6):
     """Exit code for a failed fetch: 0 while the served data is still fresh enough
     (a blip), 1 once it is genuinely stale so the run goes red and CI notifies."""
@@ -274,6 +302,7 @@ def main():
         for tour in ("atp", "wta"):
             full = fetch_rankings(tour)
             out["rankings"][tour] = full[:10]
+            out.setdefault("rankupd", {})[tour] = rank_date(tour)
             rankmap.update({x["i"]: x["rank"] for x in full if x["i"]})
         seen = set()
         for tour in ("atp", "wta"):
@@ -285,15 +314,26 @@ def main():
     except Exception as e:
         print(f"Fetch failed ({e}); leaving existing files untouched.", file=sys.stderr)
         sys.exit(stale_exit())
-    if not out["rankings"].get("atp") and not out["slams"]:
+    # between Slams the rankings ARE the file, so a half-empty one is not worth publishing
+    if not out["slams"] and not (out["rankings"].get("atp") and out["rankings"].get("wta")):
+        # ESPN answered, but with nothing usable. Same treatment as a failed fetch: green
+        # while the served file is still fresh, red once it is genuinely stale — otherwise
+        # the gate re-validates the OLD file, passes, and the site freezes with CI green.
         print("Empty result; leaving existing files untouched.", file=sys.stderr)
-        sys.exit(0)
+        sys.exit(stale_exit())
     try:
-        odds = fetch_odds(out["slams"])
+        odds = fetch_odds(out["slams"]) if out["slams"] else 0   # nothing to price off-season
     except Exception as e:
         odds = 0
         print(f"Odds fetch failed ({e}); continuing without.", file=sys.stderr)
     dedupe_countries(out)
+    # Off-season the payload is just the rankings and changes about weekly, but the tick
+    # still runs every 12 min: writing a new timestamp alone produced ~390 commits and as
+    # many Pages rebuilds in a fortnight, and buried the ticks that did change something.
+    # While a Slam is running every tick is kept — freshness is the point then.
+    if not out["slams"] and unchanged_but_timestamp(out) and file_age_h() < 6:
+        print("No Slam and nothing changed since the last build; leaving data.json alone.")
+        return
     with open("data.json", "w", encoding="utf-8") as f:
         json.dump(out, f, ensure_ascii=False, separators=(",", ":"))
     added = update_champions(out["slams"])

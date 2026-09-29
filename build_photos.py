@@ -37,6 +37,16 @@ def espn_has(i):
     except Exception:
         return False
 
+def alive(url):
+    """True unless the stored thumbnail is gone (Commons deletions do happen)."""
+    if not url:
+        return False
+    try:
+        return urllib.request.urlopen(
+            urllib.request.Request(url, method="HEAD", headers=UA), timeout=15).status == 200
+    except Exception:
+        return False
+
 def players(data):
     """{espn id: full name} for everyone in the current Slam, singles and doubles."""
     out = {}
@@ -151,6 +161,15 @@ def main():
     slam = f"{data['slams'][0]['name']} {data['slams'][0]['start'][:4]}" if data.get("slams") else None
     if slam and doc.get("slam") != slam:
         doc["checked"] = []
+        # a stored photo can be deleted from Commons (one was); drop dead ones so the
+        # lookup below can find a replacement
+        with ThreadPoolExecutor(16) as ex:
+            dead = [i for i, ok in zip(list(doc["photos"]),
+                                       ex.map(lambda i: alive(doc["photos"][i].get("u", "")), list(doc["photos"]))) if not ok]
+        for i in dead:
+            del doc["photos"][i]
+        if dead:
+            print(f"dropped {len(dead)} photo(s) whose Commons file is gone: {', '.join(dead)}", file=sys.stderr)
     todo = [i for i in ppl if i not in doc["photos"] and i not in doc["checked"]]
     if not todo:
         print(f"photos.json: nothing new ({len(doc['photos'])} photos)")

@@ -111,7 +111,7 @@ re-uploaded here — highlights link or embed from the tournaments' own channels
 
 ## Roadmap
 
-- 2028 dates as tournaments announce them
+- US Open 2027 dates when the USTA publishes them (the card reads "DATES TBA" until then), then 2028
 
 ## License
 

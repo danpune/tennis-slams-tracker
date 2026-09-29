@@ -79,7 +79,9 @@ def entry(vid, slam_name, draw, m):
     between tournaments (highlights.json is the site's memory, same as champions.json)."""
     win = m["a"] if m["a"]["w"] else m["b"]
     los = m["b"] if win is m["a"] else m["a"]
+    st = m.get("state", "")
     return {"yt": vid, "w": win["n"], "l": los["n"],
+            **({"st": st} if re.search(r"retired|walkover|default", st, re.I) else {}),
             "sc": " ".join(f"{a}-{b}" for a, b in zip(setstr(win, los), setstr(los, win))),
             "dr": draw, "rd": m.get("round", ""), "d": m.get("date", ""), "sl": slam_name}
 
@@ -109,7 +111,7 @@ def main():
             print(f"{path} unreadable ({e}); refusing to overwrite.", file=sys.stderr)
             return
     have = doc["highlights"]
-    added = 0
+    added = restamped = 0
     for slam in data.get("slams", []):
         handle = next((h for k, h in CHANNELS.items() if k in slam["name"].lower()), None)
         if not handle:
@@ -119,9 +121,12 @@ def main():
         except Exception as e:
             print(f"{slam['name']}: channel fetch failed ({e}); skipping.", file=sys.stderr)
             continue
+        # ids we already have stay in the list: the stored caption is written once and is
+        # the only thing the gallery can show after the feed drops the Slam, so re-stamp it
+        # while the live data is still there (Wimbledon's clips were captioned before
+        # tiebreak capture existed and read "7-6" for months).
         pending = [(d["draw"], m) for d in slam["draws"] if "singles" in d["draw"].lower()
-                   for m in d["matches"]
-                   if m["done"] and m.get("id") and m["id"] not in have]
+                   for m in d["matches"] if m["done"] and m.get("id")]
         for vid, title in videos:  # newest first; plain 'Highlights' precedes 'Extended'
             t = norm(title)
             hits = [(draw, m) for draw, m in pending
@@ -136,13 +141,18 @@ def main():
             if not official(vid, handle):
                 print(f"REJECTED (not {handle}): {vid} {title}", file=sys.stderr)
                 continue
+            e = entry(vid, slam["name"], draw, m)
             if m["id"] not in have:
                 added += 1
-            have[m["id"]] = entry(vid, slam["name"], draw, m)
-    if added:
+            elif have[m["id"]] == e:
+                continue          # nothing changed; don't dirty the file
+            else:
+                restamped += 1
+            have[m["id"]] = e
+    if added or restamped:
         with open(path, "w", encoding="utf-8") as f:
             json.dump(doc, f, ensure_ascii=False, indent=0)
-    print(f"highlights.json: +{added} new ({len(have)} total)")
+    print(f"highlights.json: +{added} new, {restamped} re-stamped ({len(have)} total)")
 
 if __name__ == "__main__":
     main()
