@@ -92,17 +92,10 @@ def fetch_tour(tour, rankmap, dates=None):
                        "draws": draws})
     return events
 
-RANK_DATES = {}
-
-def rank_date(tour):
-    """ESPN stamps each rankings list with the date it was published (weekly)."""
-    return RANK_DATES.get(tour, "")
-
 def fetch_rankings(tour):
     """Full ranking list (~150 deep) — top-10 is displayed, the rest ranks draw players."""
     d = get(f"{BASE}/{tour}/rankings")
     block = (d.get("rankings") or [{}])[0]
-    RANK_DATES[tour] = (block.get("update") or d.get("lastUpdated") or "")[:10]
     out = []
     for x in block.get("ranks") or []:
         a = x.get("athlete") or {}
@@ -280,14 +273,21 @@ def unchanged_but_timestamp(out, path="data.json"):
     a.pop("updated", None), b.pop("updated", None)
     return a == b
 
-def stale_exit(hours=6):
+def stale_exit(hours=None):
     """Exit code for a failed fetch: 0 while the served data is still fresh enough
-    (a blip), 1 once it is genuinely stale so the run goes red and CI notifies."""
+    (a blip), 1 once it is genuinely stale so the run goes red and CI notifies.
+
+    Off-season the served file is only rewritten on the 6-hourly heartbeat and the cron
+    is sparse, so it is legitimately older than 6h about a fifth of the time: a single
+    failed tick would otherwise redden a healthy run. While a Slam is on, 6h stands."""
     try:
-        upd = json.load(open("data.json", encoding="utf-8"))["updated"]
+        doc = json.load(open("data.json", encoding="utf-8"))
+        if hours is None:
+            hours = 6 if doc.get("slams") else 18
+        upd = doc["updated"]
         age = (datetime.now(timezone.utc)
                - datetime.strptime(upd, "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=timezone.utc))
-        if age.total_seconds() > hours * 3600:
+        if age.total_seconds() > (hours or 6) * 3600:
             print(f"data.json is {age} old; failing the run.", file=sys.stderr)
             return 1
     except Exception:
@@ -302,7 +302,6 @@ def main():
         for tour in ("atp", "wta"):
             full = fetch_rankings(tour)
             out["rankings"][tour] = full[:10]
-            out.setdefault("rankupd", {})[tour] = rank_date(tour)
             rankmap.update({x["i"]: x["rank"] for x in full if x["i"]})
         seen = set()
         for tour in ("atp", "wta"):

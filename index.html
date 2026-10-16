@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Tennis Grand Slam Tracker — Schedule, Results & Champions</title>
+<meta name="color-scheme" content="light"><title>Tennis Grand Slam Tracker — Schedule, Results & Champions</title>
 <meta name="description" content="All four tennis Grand Slams, every year — dates, countdown, results for every draw, champions history, top-10 rankings, follow your players and countries. No ads, no tracking.">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%23144a26'/><circle cx='50' cy='46' r='30' fill='%23d9e021'/><path d='M50 17 Q22 34 22 46 Q22 58 50 75' stroke='white' stroke-width='6' fill='none'/><path d='M50 17 Q78 34 78 46 Q78 58 50 75' stroke='white' stroke-width='6' fill='none'/></svg>">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -110,7 +110,7 @@ h2 b{color:var(--acc)}
 .edd .edl b{color:var(--muted);font-weight:700;font-size:11.5px;display:inline-block;min-width:26px}
 .edd .edl .sc{color:var(--muted);font-variant-numeric:tabular-nums}
 .hlgal{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px}
-.hcard{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px;cursor:pointer;text-align:left}
+.hcard{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px;cursor:pointer;text-align:left;color:var(--text)}
 .hcard:hover{border-color:var(--acc)}
 .hcard img{width:100%;aspect-ratio:16/9;object-fit:cover;border-radius:8px;background:#e7ece4}
 .hcard .hm{font-size:13px;margin-top:7px;font-weight:700}
@@ -135,6 +135,7 @@ h2 b{color:var(--acc)}
 .rohc .who .av{width:32px;height:32px;margin-right:5px}
 @media (max-width:560px){ .path .pr b{flex:0 0 100%;min-width:0}.path .pr{gap:4px 8px}
  .chip{padding:10px 15px}.mcal{padding:8px 10px;display:inline-block;margin-top:5px}.tzrow select{padding:8px 10px}
+ .cal{padding:9px 12px}   /* off-season these are the only calendar links on the page */
  /* names were ellipsing to "Danie...": the name column is starved by the right-hand
     metadata column (~57% of the card), not by the score — so wrap .st under the match
     and leave each score on its own player's line */
@@ -288,7 +289,11 @@ function nextEd(s){const now=Date.now();return s.eds.find(e=>Date.parse(e.end)+8
    the qualifying rounds are excluded, so it agrees with SLAMS[].eds.main/end rather
    than with ESPN's qualifying-inclusive start/end. Real data, nothing invented. */
 function feedMain(slam){
- const ds=(slam&&slam.draws||[]).flatMap(d=>d.matches.filter(m=>m.date&&!/^qualif/i.test(m.round||""))
+ /* singles only: since 2025 the US Open plays its mixed-doubles championship DURING
+    qualifying week, and ESPN rounds those "Round 1".."Final", which pulled the
+    main-draw window five days early and would show "IN PROGRESS Day 1" in qualifying */
+ const ds=(slam&&slam.draws||[]).filter(d=>/singles/i.test(d.draw||""))
+   .flatMap(d=>d.matches.filter(m=>m.date&&!/^qualif/i.test(m.round||""))
    .map(m=>Date.parse(m.date))).filter(n=>n);
  if(!ds.length)return null;
  const day=t=>{const d=new Date(t);return Date.UTC(d.getUTCFullYear(),d.getUTCMonth(),d.getUTCDate());};
@@ -331,7 +336,10 @@ function renderSlams(){
   if(done){
    const champ=d=>{const dr=done.draws.find(x=>x.draw===d);const f=dr&&dr.matches.find(m=>m.done&&m.round==="Final");
     if(!f)return null;const w=winSide(f);return w?w.n:null;};
-   const cm=champ("Men's Singles"),cw=champ("Women's Singles"),e2=nextEd(s);
+   const cm=champ("Men's Singles"),cw=champ("Women's Singles"),n2=nextEd(s);
+   /* nextEd returns this edition until end+1d while the card flips to Completed as soon
+      as the last final lands: for ~24h it advertised the Slam that just finished as "next" */
+   const e2=n2&&String(n2.label)!==String(done.year)?n2:null;
    return '<div class="slam done" data-ed="'+esc(done.year+"|"+done.name)+'" role="button" tabindex="0"><div><span class="badge b-done">✓ Completed</span></div><div class="nm">'+s.flag+" "+esc(s.name)+" "+done.year+'</div><div class="meta">'+esc(s.venue)+" · "+s.surface+'</div><div class="dates">🏆 '+esc(cm||"")+(cw?" · "+esc(cw):"")+'</div><div class="note">Tap for winners &amp; results'+(e2?" · next: "+fmtD(e2.start)+" – "+fmtDY(e2.end):"")+"</div>"
     +(e2?'<div><a class="cal" target="_blank" rel="noopener" href="'+gcal(s,e2)+'">📅 Gcal</a><a class="cal" href="'+ics(s,e2)+'" download="'+esc(s.name).replace(/\s/g,"")+e2.label+'.ics">📅 iCal</a></div>':"")+"</div>";
   }
@@ -357,7 +365,8 @@ const COUNTRY_SEED={USA:"United States",IND:"India",GBR:"Great Britain",ESP:"Spa
 function collectPlayers(){
  /* seed wins: ESPN's flag.alt is "USA", the seed's "United States" is what people type */
  PLAYERS={};PIDX={};COUNTRIES=Object.assign({},DATA?.countries||{},COUNTRY_SEED);
- const add=p=>{if(p&&p.n&&!isTBD(p.n)){PLAYERS[p.n]={n:p.n,c:p.c||"",cn:p.cn||""};if(p.i)PIDX[p.n]=p.i;if(p.c)COUNTRIES[p.c]=COUNTRIES[p.c]||p.cn||p.c;}};
+ const add=p=>{if(p&&p.n&&!isTBD(p.n)){if(p.c==="SRB")p={...p,c:"SER"};   /* seeded rows used SRB, ESPN uses SER */
+  PLAYERS[p.n]={n:p.n,c:p.c||"",cn:p.cn||""};if(p.i)PIDX[p.n]=p.i;if(p.c)COUNTRIES[p.c]=COUNTRIES[p.c]||p.cn||p.c;}};
  (DATA?.slams||[]).forEach(s=>s.draws.forEach(dr=>dr.matches.forEach(m=>{
    /* doubles teams arrive as "A / B" — index both halves too */
    [m.a,m.b].forEach(side=>{add(side);(side.n||"").split(" / ").forEach(nm=>{if(nm&&nm!==side.n)add({n:nm.trim(),c:side.c,cn:side.cn});});});
@@ -368,6 +377,10 @@ function collectPlayers(){
  CHAMPS.forEach(c=>{add({n:c.champion,c:c.champC});add({n:c.runnerUp,c:c.runnerC});});
  EDITIONS.forEach(e=>e.draws.forEach(dr=>dr.matches.forEach(m=>[m.a,m.b].forEach(side=>{
   add(side);(side.n||"").split(" / ").forEach((nm,k)=>{if(nm&&nm!==side.n)add({n:nm.trim(),i:(side.ids||[])[k],c:side.c,cn:side.cn});});}))));
+ /* drop "C. Alcaraz" when "Carlos Alcaraz" is indexed: following the abbreviated half
+    stars him in doubles but never in a singles draw, so the suggestion half-works */
+ const full=new Set(Object.keys(PLAYERS).filter(n=>!/^[A-Z]\.\s/.test(n)).map(n=>n.split(" ").pop().toLowerCase()));
+ Object.keys(PLAYERS).forEach(n=>{if(/^[A-Z]\.\s/.test(n)&&full.has(n.split(" ").pop().toLowerCase()))delete PLAYERS[n];});
 }
 function renderMine(){
  document.getElementById("fmine").innerHTML=
@@ -400,7 +413,7 @@ document.addEventListener("click",e=>{
  const im=e.target.closest("img.av");if(im){showLB(im);return;}
  const pp=e.target.closest("[data-pp]");if(pp){showPath(pp.dataset.pp);return;}
  const px=e.target.closest("[data-ppx]");if(px){document.getElementById("path").innerHTML="";return;}
- const d=e.target.closest("[data-d]");if(d){curDraw=/^(all|today|brk)$/.test(d.dataset.d)?d.dataset.d:+d.dataset.d;curRound=null;history.replaceState(null,"","#"+viewHash());renderMatches();return;}
+ const d=e.target.closest("[data-d]");if(d){curDraw=/^(all|today|brk)$/.test(d.dataset.d)?d.dataset.d:+d.dataset.d;curRound=null;follOnly=false;document.getElementById("folltog").classList.remove("on");   /* picking a view leaves the ⭐ filter, which otherwise looks like a frozen page */history.replaceState(null,"","#"+viewHash());renderMatches();return;}
  const r=e.target.closest("[data-r]");if(r){curRound=r.dataset.r;renderMatches();return;}
  const hm=e.target.closest("#hlmore");if(hm){HLALL=!HLALL;renderHLGal();return;}
  const f=e.target.closest("#folltog");if(f){follOnly=!follOnly;renderMatches();}
@@ -679,7 +692,7 @@ function renderBrief(slam){
  /* top-10 watch: eliminations + survivors in the singles draws */
  const rk={};["atp","wta"].forEach(t=>(DATA.rankings?.[t]||[]).forEach(x=>rk[x.name]=x.rank));
  const outs=[],alive=[];
- slam.draws.slice(0,2).forEach(dr=>{
+ slam.draws.filter(dr=>/singles/i.test(dr.draw)).forEach(dr=>{
   const seen={};
   dr.matches.forEach(m=>{if(!m.done)return;
    [[m.a,m.b],[m.b,m.a]].forEach(([side,opp])=>{if(rk[side.n]!=null)seen[side.n]={r:m.round,w:side.w,opp:opp.n};});});
@@ -698,6 +711,8 @@ function renderChamps(slam){
  document.getElementById("champs").innerHTML=fin.length?'<div class="champline">🏆 <b>Champions:</b> '+fin.map(c=>esc(c.draw)+" — <b>"+esc(c.name)+"</b>").join(" · ")+"</div>":"";
 }
 /* ── roll of honour: champions.json + finals captured live in data.json ── */
+const DRAW_ORDER=["Men's Singles","Women's Singles","Men's Doubles","Women's Doubles","Mixed Doubles"];
+const drawOrder=d=>{const i=DRAW_ORDER.indexOf(d);return i<0?9:i;};
 function renderRoH(champs){
  const all=[...champs];
  (DATA?.slams||[]).forEach(s=>{const y=+(s.start||"").slice(0,4);
@@ -706,7 +721,7 @@ function renderRoH(champs){
     if(!all.some(c=>c.year===y&&c.slam===s.name&&c.draw===dr.draw))
      all.push({year:y,slam:s.name,draw:dr.draw,champion:w.n,champC:w.c,runnerUp:l.n,runnerC:l.c});}});});
  document.getElementById("roh").innerHTML=SLAMS.map(s=>{
-  const rows=all.filter(c=>c.slam===s.name).sort((a,b)=>b.year-a.year||a.draw.localeCompare(b.draw));
+  const rows=all.filter(c=>c.slam===s.name).sort((a,b)=>b.year-a.year||drawOrder(a.draw)-drawOrder(b.draw)||a.draw.localeCompare(b.draw));
   const byYear={};rows.forEach(c=>{(byYear[c.year]=byYear[c.year]||[]).push(c);});
   const yrs=Object.keys(byYear).sort((a,b)=>b-a).slice(0,4).map(y=>{
    const lines=byYear[y].map(c=>{
@@ -786,9 +801,9 @@ function stampUpd(){
  const ref=Math.max(liveAt,DATA.updated?Date.parse(DATA.updated):0),age=Date.now()-ref;
  /* between Slams there are no scores to be delayed: the build is just the rankings, and
     the cron's normal multi-hour gaps would otherwise show a red warning most of the time */
- if(!(DATA.slams||[]).length){const ru=DATA.rankupd||{},fd=s=>new Date(s+"T12:00:00Z").toLocaleDateString(undefined,{month:"short",day:"numeric"});
-  el.textContent=(ru.atp||ru.wta)?"world rankings · ATP "+fd(ru.atp||ru.wta)+" · WTA "+fd(ru.wta||ru.atp)
-   :"rankings updated "+new Date(ref).toLocaleDateString(undefined,{month:"short",day:"numeric"});return;}
+ if(!(DATA.slams||[]).length){/* no date here: ESPN exposes only its own refresh stamp (Thursday 07:00Z), not the
+     tours' Monday publication date, and this project never shows a date it can't verify */
+  el.textContent="world rankings · ATP & WTA top 10";return;}
  if(age>LIVE_STALE_MS){const t=Math.round(age/6e4),hh=Math.floor(t/60),mm=t%60;   /* never "1h 60m" */
   el.innerHTML='<span class="stale">⚠ scores may be delayed — updated '+(hh?hh+"h ":"")+mm+"m ago</span>";}
  else el.textContent="updated "+new Date(ref).toLocaleTimeString()+(liveAt>=ref?" — live from the feed":"");

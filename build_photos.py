@@ -15,7 +15,7 @@ Merge-only and fail-safe like the other builders: ids already decided (photo or 
 are not looked up again, so after the first run a CI tick costs one read of data.json.
 Every new Slam re-checks the "checked" ids (see main); delete one to retry it sooner. Standard library only, no API key.
 """
-import html, json, os, re, sys, unicodedata, urllib.parse, urllib.request
+import html, json, os, re, sys, unicodedata, urllib.error, urllib.parse, urllib.request
 from concurrent.futures import ThreadPoolExecutor
 
 UA = {"User-Agent": "TennisSlamTracker/1.0 (https://github.com/danpune/tennis-slams-tracker)"}
@@ -44,8 +44,10 @@ def alive(url):
     try:
         return urllib.request.urlopen(
             urllib.request.Request(url, method="HEAD", headers=UA), timeout=15).status == 200
+    except urllib.error.HTTPError as e:
+        return e.code not in (404, 410)   # only an explicit "gone" means deleted
     except Exception:
-        return False
+        return True                       # timeout, 429, DNS blip: keep what we have
 
 def players(data):
     """{espn id: full name} for everyone in the current Slam, singles and doubles."""

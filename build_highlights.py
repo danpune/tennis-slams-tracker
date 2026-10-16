@@ -95,8 +95,23 @@ def official(video_id, handle):
     return (d.get("author_url") or "").lower().rstrip("/") == \
         f"https://www.youtube.com/{handle}".lower()
 
-def main():
-    data = json.load(open("data.json", encoding="utf-8"))
+def main(dates=None):
+    """dates: ESPN historical snapshot days (YYYYMMDD) instead of the live data.json —
+    the only way to repair a finished Slam's stored captions, since the live feed drops
+    it and the re-stamp window closes for good."""
+    if dates:
+        import fetch_data as F
+        slams, seen = [], set()
+        for day in dates:
+            for tour in ("atp", "wta"):
+                for ev in F.fetch_tour(tour, {}, dates=day):
+                    if ev["name"] + str(day) in seen:
+                        continue
+                    seen.add(ev["name"] + str(day))
+                    slams.append(ev)
+        data = {"slams": slams}
+    else:
+        data = json.load(open("data.json", encoding="utf-8"))
     path = "highlights.json"
     doc = {"_howto": "Auto-filled by build_highlights.py: ESPN match id -> official "
                      "YouTube highlight. Every entry is oEmbed-verified against the "
@@ -112,6 +127,28 @@ def main():
             return
     have = doc["highlights"]
     added = restamped = 0
+    if dates:
+        # repair mode: the clips are already verified, and the channel page no longer
+        # lists them — re-stamp the stored context from the snapshot, by match id
+        for slam in data["slams"]:
+            for d in slam["draws"]:
+                if "singles" not in d["draw"].lower():
+                    continue
+                for m in d["matches"]:
+                    cur = have.get(m.get("id"))
+                    if not cur or not m["done"]:
+                        continue
+                    e = entry(cur["yt"], slam["name"], d["draw"], m)
+                    if {e["w"], e["l"]} != {cur["w"], cur["l"]} or e == cur:
+                        continue      # different match, or nothing to change
+                    print(f"re-stamped {m['id']}: {cur.get('sc')!r} -> {e['sc']!r}", file=sys.stderr)
+                    have[m["id"]] = e
+                    restamped += 1
+        if restamped:
+            with open(path, "w", encoding="utf-8") as f:
+                json.dump(doc, f, ensure_ascii=False, indent=0)
+        print(f"highlights.json: {restamped} re-stamped from snapshot ({len(have)} total)")
+        return
     for slam in data.get("slams", []):
         handle = next((h for k, h in CHANNELS.items() if k in slam["name"].lower()), None)
         if not handle:
@@ -138,14 +175,14 @@ def main():
             draw, m = hits[0]
             if "extended" in t and m["id"] in have:
                 continue  # already have the short-form clip
+            e = entry(vid, slam["name"], draw, m)
+            if have.get(m["id"]) == e:
+                continue          # unchanged: no write, and no oEmbed call either
             if not official(vid, handle):
                 print(f"REJECTED (not {handle}): {vid} {title}", file=sys.stderr)
                 continue
-            e = entry(vid, slam["name"], draw, m)
             if m["id"] not in have:
                 added += 1
-            elif have[m["id"]] == e:
-                continue          # nothing changed; don't dirty the file
             else:
                 restamped += 1
             have[m["id"]] = e
@@ -155,4 +192,4 @@ def main():
     print(f"highlights.json: +{added} new, {restamped} re-stamped ({len(have)} total)")
 
 if __name__ == "__main__":
-    main()
+    main(sys.argv[1:] or None)
