@@ -279,12 +279,21 @@ const SLAMS=[
  {name:"Roland-Garros",flag:"🇫🇷",venue:"Paris",surface:"Clay",tz:"Europe/Paris",yt:"https://www.youtube.com/@rolandgarros",
   eds:[{label:"2027",start:"2027-05-17",main:"2027-05-23",end:"2027-06-06"}]},
  {name:"Wimbledon",flag:"🇬🇧",venue:"All England Club, London",surface:"Grass",tz:"Europe/London",yt:"https://www.youtube.com/@wimbledon",
-  eds:[{label:"2026",start:"2026-06-22",main:"2026-06-29",end:"2026-07-12"},{label:"2027",start:"2027-06-28",main:"2027-06-28",end:"2027-07-11"}]},
+  eds:[{label:"2026",start:"2026-06-22",main:"2026-06-29",end:"2026-07-12"},{label:"2027",start:"2027-06-28",main:"2027-06-28",end:"2027-07-11"},{label:"2028",start:"2028-07-03",main:"2028-07-03",end:"2028-07-16"},{label:"2029",start:"2029-07-02",main:"2029-07-02",end:"2029-07-15"},{label:"2030",start:"2030-07-01",main:"2030-07-01",end:"2030-07-14"}]},
  {name:"US Open",flag:"🇺🇸",venue:"USTA Billie Jean King NTC, New York",surface:"Hard",tz:"America/New_York",yt:"https://www.youtube.com/@usopen",
   eds:[{label:"2026",start:"2026-08-23",main:"2026-08-30",end:"2026-09-13"}]}
 ];
 /* current-or-next edition; null => all known editions are past (show "dates TBA") */
 function nextEd(s){const now=Date.now();return s.eds.find(e=>Date.parse(e.end)+864e5>=now)||null;}
+/* The instant the first ball is struck: 11:00 at the venue. One value feeds both the
+   countdown target and the in-progress switch, so the clock runs to 0 and flips there. */
+function firstBall(s,e){
+ const base=Date.parse(e.main+"T11:00:00Z");let off=0;
+ try{const z=new Intl.DateTimeFormat("en",{timeZone:s.tz,timeZoneName:"shortOffset"})
+   .formatToParts(new Date(base)).find(x=>x.type==="timeZoneName").value;
+  const m=/GMT([+-])(\d{1,2})(?::(\d{2}))?/.exec(z);
+  if(m)off=(m[1]==="-"?-1:1)*((+m[2])*60+(+(m[3]||0)));}catch(err){}
+ return base-off*6e4;}
 /* Main-draw window read off the feed itself, for a Slam SLAMS has no dates for yet —
    the qualifying rounds are excluded, so it agrees with SLAMS[].eds.main/end rather
    than with ESPN's qualifying-inclusive start/end. Real data, nothing invented. */
@@ -298,20 +307,26 @@ function feedMain(slam){
  if(!ds.length)return null;
  const day=t=>{const d=new Date(t);return Date.UTC(d.getUTCFullYear(),d.getUTCMonth(),d.getUTCDate());};
  return{main:day(Math.min.apply(null,ds)),end:day(Math.max.apply(null,ds))};}
-const fmtD=iso=>new Date(iso+"T12:00:00Z").toLocaleDateString(undefined,{month:"short",day:"numeric"});
-const fmtDY=iso=>new Date(iso+"T12:00:00Z").toLocaleDateString(undefined,{month:"short",day:"numeric",year:"numeric"});
+/* timeZone:UTC — these are calendar dates, not instants; without it NZ/Fiji/Samoa
+   (UTC+12..+14) read every Slam date one day late */
+const fmtD=iso=>new Date(iso+"T12:00:00Z").toLocaleDateString(undefined,{month:"short",day:"numeric",timeZone:"UTC"});
+const fmtDY=iso=>new Date(iso+"T12:00:00Z").toLocaleDateString(undefined,{month:"short",day:"numeric",year:"numeric",timeZone:"UTC"});
 function gcal(s,e){const d0=e.start.replace(/-/g,""),d1=new Date(Date.parse(e.end+"T12:00:00Z")+864e5).toISOString().slice(0,10).replace(/-/g,"");
  return "https://calendar.google.com/calendar/render?action=TEMPLATE&text="+encodeURIComponent(s.name+" "+e.label+" 🎾")+"&dates="+d0+"/"+d1+"&details="+encodeURIComponent("Tennis Grand Slam · "+s.venue)+"&location="+encodeURIComponent(s.venue);}
+const icsEsc=t=>String(t).replace(/([,;\\])/g,"\\$1").replace(/\r?\n/g," ");
+const icsStamp=()=>new Date().toISOString().replace(/[-:]/g,"").replace(/\.\d{3}/,"");
 function ics(s,e){const d0=e.start.replace(/-/g,""),d1=new Date(Date.parse(e.end+"T12:00:00Z")+864e5).toISOString().slice(0,10).replace(/-/g,"");
- const v=["BEGIN:VCALENDAR","VERSION:2.0","PRODID:grandslams","BEGIN:VEVENT","UID:"+s.name.replace(/\W/g,"")+d0+"@grandslams","DTSTART;VALUE=DATE:"+d0,"DTEND;VALUE=DATE:"+d1,"SUMMARY:"+s.name+" "+e.label+" 🎾","LOCATION:"+s.venue,"END:VEVENT","END:VCALENDAR"].join("\r\n");
+ const v=["BEGIN:VCALENDAR","VERSION:2.0","PRODID:grandslams","BEGIN:VEVENT","UID:"+s.name.replace(/\W/g,"")+d0+"@grandslams","DTSTAMP:"+icsStamp(),"DTSTART;VALUE=DATE:"+d0,"DTEND;VALUE=DATE:"+d1,"SUMMARY:"+icsEsc(s.name+" "+e.label+" 🎾"),"LOCATION:"+icsEsc(s.venue),"END:VEVENT","END:VCALENDAR"].join("\r\n");
  return "data:text/calendar;charset=utf-8,"+encodeURIComponent(v);}
 function renderCount(){
  const now=Date.now(),el=document.getElementById("count");
  /* the main draw, not qualifying, is "in progress" — otherwise the countdown vanishes
     for the whole qualifying week and every day of it reads "Day 1" */
- const running=SLAMS.map(s=>({s,e:nextEd(s)})).find(x=>x.e&&now>=Date.parse(x.e.main+"T00:00:00Z")&&now<=Date.parse(x.e.end)+864e5);
+ const running=SLAMS.map(s=>({s,e:nextEd(s)})).find(x=>x.e&&now>=firstBall(x.s,x.e)&&now<=Date.parse(x.e.end)+864e5);
  if(running){el.style.display="";
-  const dn=Math.floor((now-Date.parse(running.e.main+"T00:00:00Z"))/864e5)+1;
+  /* day number by the venue's calendar, not UTC's: Melbourne is 11h ahead */
+  const vd=new Date(now).toLocaleDateString("en-CA",{timeZone:running.s.tz});
+  const dn=Math.floor((Date.parse(vd)-Date.parse(running.e.main))/864e5)+1;
   el.innerHTML='<span class="to">🔴 IN PROGRESS</span><span class="ev">'+running.s.flag+" "+esc(running.s.name)+" "+running.e.label+'</span><span class="big">Day '+dn+'</span><span class="to">through '+fmtD(running.e.end)+"</span>";
   return;}
  /* the feed says a Slam is on but SLAMS has no edition for it (dates not published yet):
@@ -321,10 +336,10 @@ function renderCount(){
   const meta=SLAMS.find(x=>normSlam(x.name)===normSlam(lv.name))||{flag:"🎾"};
   el.innerHTML='<span class="to">🔴 IN PROGRESS</span><span class="ev">'+meta.flag+" "+esc(lv.name)+" "+new Date(lw.main).getUTCFullYear()+'</span><span class="big">Day '+(Math.floor((now-lw.main)/864e5)+1)+'</span><span class="to">through '+fmtD(new Date(lw.end).toISOString().slice(0,10))+"</span>";
   return;}
- const up=SLAMS.map(s=>({s,e:nextEd(s)})).filter(x=>x.e&&Date.parse(x.e.main+"T15:00:00Z")>now)
-   .sort((a,b)=>Date.parse(a.e.main)-Date.parse(b.e.main))[0];
+ const up=SLAMS.map(s=>({s,e:nextEd(s)})).filter(x=>x.e&&firstBall(x.s,x.e)>now)
+   .sort((a,b)=>firstBall(a.s,a.e)-firstBall(b.s,b.e))[0];
  if(!up){el.style.display="none";return;}
- const t=Date.parse(up.e.main+"T15:00:00Z"),d=t-now,days=Math.floor(d/864e5),h=Math.floor(d%864e5/36e5),m=Math.floor(d%36e5/6e4),sec=Math.floor(d%6e4/1e3);
+ const t=firstBall(up.s,up.e),d=t-now,days=Math.floor(d/864e5),h=Math.floor(d%864e5/36e5),m=Math.floor(d%36e5/6e4),sec=Math.floor(d%6e4/1e3);
  el.innerHTML='<span class="to">NEXT SLAM</span><span class="ev">'+up.s.flag+" "+esc(up.s.name)+" "+up.e.label+'</span><span class="big">'+days+"d "+h+"h "+m+"m "+sec+'s</span><span class="to">to main draw · '+fmtD(up.e.main)+"</span>";
 }
 setInterval(renderCount,1000);
@@ -347,7 +362,7 @@ function renderSlams(){
   if(!e){const y=+s.eds[s.eds.length-1].label+1;
    return '<div class="slam"><div><span class="badge b-tba">DATES TBA</span></div><div class="nm">'+s.flag+" "+esc(s.name)+" "+y+'</div><div class="meta">'+esc(s.venue)+" · "+s.surface+'</div><div class="dates">Dates to be announced</div></div>';}
   const t0=Date.parse(e.start),t1=Date.parse(e.end)+864e5;
-  const tm=Date.parse(e.main+"T00:00:00Z");
+  const tm=firstBall(s,e);
  const[cls,lab]=now>=tm&&now<=t1?["b-live","IN PROGRESS"]:now>=t0&&now<tm?["b-soon","QUALIFYING"]:(Date.parse(e.main)===nextMain?["b-next","NEXT UP"]:["b-soon","UPCOMING"]);
   return '<div class="slam"><div><span class="badge '+cls+'">'+lab+'</span></div><div class="nm">'+s.flag+" "+esc(s.name)+" "+e.label+'</div><div class="meta">'+esc(s.venue)+" · "+s.surface+'</div><div class="dates">'+fmtD(e.start)+" – "+fmtDY(e.end)+'</div><div><a class="cal" target="_blank" rel="noopener" href="'+gcal(s,e)+'">📅 Gcal</a><a class="cal" href="'+ics(s,e)+'" download="'+esc(s.name).replace(/\s/g,"")+e.label+'.ics">📅 iCal</a></div></div>';
  }).join("");
@@ -452,7 +467,7 @@ const zstamp=t=>new Date(t).toISOString().replace(/[-:]/g,"").replace(/\.\d{3}/,
 function gcalM(m,slam){const t0=Date.parse(m.date),t1=t0+150*60000;
  return "https://calendar.google.com/calendar/render?action=TEMPLATE&text="+encodeURIComponent(m.a.n+" v "+m.b.n+" 🎾 "+slam.name)+"&dates="+zstamp(t0)+"/"+zstamp(t1)+"&details="+encodeURIComponent(slam.name+" · "+(m.round||"")+" — scheduled start; match length varies");}
 function icsM(m,slam){const t0=Date.parse(m.date),t1=t0+150*60000;
- const v=["BEGIN:VCALENDAR","VERSION:2.0","PRODID:grandslams","BEGIN:VEVENT","UID:"+zstamp(t0)+(m.a.n+m.b.n).replace(/\W/g,"")+"@grandslams","DTSTART:"+zstamp(t0),"DTEND:"+zstamp(t1),"SUMMARY:"+(m.a.n+" v "+m.b.n+" 🎾 "+slam.name).replace(/,/g,""),"DESCRIPTION:"+(m.round||"")+" - scheduled start; length varies","END:VEVENT","END:VCALENDAR"].join("\r\n");
+ const v=["BEGIN:VCALENDAR","VERSION:2.0","PRODID:grandslams","BEGIN:VEVENT","UID:"+zstamp(t0)+(m.a.n+m.b.n).replace(/\W/g,"")+"@grandslams","DTSTAMP:"+icsStamp(),"DTSTART:"+zstamp(t0),"DTEND:"+zstamp(t1),"SUMMARY:"+icsEsc(m.a.n+" v "+m.b.n+" 🎾 "+slam.name),"DESCRIPTION:"+icsEsc((m.round||"")+" - scheduled start; length varies"),"END:VEVENT","END:VCALENDAR"].join("\r\n");
  return "data:text/calendar;charset=utf-8,"+encodeURIComponent(v);}
 /* ── live slam results ── */
 let DATA=null,HL={},PH={},CHAMPS=[],curDraw=0,curRound=null,follOnly=false,HLALL=false;
@@ -469,7 +484,10 @@ function rounds(dr){const rs=[...new Set(dr.matches.map(m=>m.round).filter(Boole
  return rs.sort((a,b)=>{const ia=roundOrder.findIndex(r=>a.startsWith(r)),ib=roundOrder.findIndex(r=>b.startsWith(r));return (ia<0?99:ia)-(ib<0?99:ib);});}
 function sideFollowed(side){if(isF(side))return true;return (side.n||"").split(" / ").some(nm=>FOLLOW.p.includes(nm.trim()));}
 const sets=(p,o)=>(p.s||[]).map((v,k)=>{
- const t=p.tb&&p.tb[k],ot=o&&o.tb&&o.tb[k],ov=o&&o.s?o.s[k]:null;
+ /* tb comes straight from the feed and these strings go into innerHTML unescaped at the
+    bracket and match rows: coerce to a number so nothing but digits can ever get through */
+ const num=x=>x==null||x===""||isNaN(+x)?null:+x;
+ const t=num(p.tb&&p.tb[k]),ot=num(o&&o.tb&&o.tb[k]),ov=o&&o.s?o.s[k]:null;
  if(t==null&&ot==null)return String(v);
  if(v<=1&&(ov==null||ov<=1))return String(t!=null?t:v);      /* match tiebreak */
  return v+(t!=null&&ot!=null&&t<ot?"("+t+")":"");            /* regular set: annotate loser */
@@ -591,9 +609,16 @@ function renderHLGal(){
  }).join("")+(all>24?'<button class="chip" id="hlmore" style="grid-column:1/-1;justify-self:start;margin-top:10px">'+(HLALL?"Show top 24":"Show all "+all+" clips")+"</button>":"");
 }
 /* show courts the way an order-of-play board does: show courts first, then by number */
-const COURT_TOP=["Arthur Ashe Stadium","Louis Armstrong Stadium","Grandstand","Stadium 17"];
+/* show courts in each Slam's own order, spelled exactly as ESPN sends them (read off the
+   2026 snapshots). Anything unknown sorts after by name, so a new court is merely last. */
+const COURT_TOP=["Rod Laver Arena","Margaret Court Arena","John Cain Arena","KIA Arena","1573 Arena","ANZ Arena",
+ "Court Philippe-Chatrier","Court Suzanne-Lenglen","Court Simonne-Mathieu",
+ "Centre Court","No. 1 Court","No. 2 Court","No. 3 Court",
+ "Arthur Ashe Stadium","Louis Armstrong Stadium","Grandstand","Stadium 17"];
 function courtRank(c){if(!c)return 9999;const i=COURT_TOP.indexOf(c);if(i>=0)return i;
- const n=String(c).match(/\d+/);return n?100+ +n[0]:500;}
+ const n=String(c).match(/\d+/);
+ if(/roehampton/i.test(c))return n?300+ +n[0]:400;   /* Wimbledon qualifying, off site */
+ return n?100+ +n[0]:500;}
 const BRK_EMPTY='<div class="brs pend"><div class="brp">—</div><div class="brp">—</div></div>';
 function bracketHTML(dr){
  let qf=dr.matches.filter(m=>m.round==="Quarterfinal"),
@@ -644,7 +669,8 @@ function renderMatches(){
  if(follOnly){ms=slam.draws.flatMap(d2=>d2.matches.filter(m=>sideFollowed(m.a)||sideFollowed(m.b)).map(m=>({...m,_draw:d2.draw})));
   document.getElementById("roundchips").innerHTML='<p class="note">Showing every match involving your ⭐ players/countries, across all draws.</p>';}
  else if(isToday){const vt=venueToday();ms=slam.draws.flatMap(d2=>d2.matches.filter(m=>m.date&&venueDay(m.date)===vt).map(m=>({...m,_draw:d2.draw})))
-   .sort((x,y)=>courtRank(x.ct)-courtRank(y.ct)||Date.parse(x.date)-Date.parse(y.date));
+   /* name before time, or one court's matches interleave with another of equal rank */
+   .sort((x,y)=>courtRank(x.ct)-courtRank(y.ct)||String(x.ct||"").localeCompare(String(y.ct||""))||Date.parse(x.date)-Date.parse(y.date));
   document.getElementById("roundchips").innerHTML='<p class="note">The order of play for today ('+esc(vt)+', the tournament\'s own day) — by court, in playing order, across every draw.</p>';}
  else if(isAll){ms=slam.draws.flatMap(d2=>d2.matches.filter(m=>m.date).map(m=>({...m,_draw:d2.draw}))).sort((x,y)=>Date.parse(x.date)-Date.parse(y.date));
   document.getElementById("roundchips").innerHTML='<p class="note">The whole tournament, day by day — every draw, every round, in your selected timezone.</p>';}

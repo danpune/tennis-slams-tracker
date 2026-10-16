@@ -300,12 +300,21 @@ def stale_exit(hours=None):
 def main():
     out = {"updated": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
            "source": "ESPN (unofficial public feed)", "slams": [], "rankings": {}}
+    rankmap = {}
     try:
-        rankmap = {}
         for tour in ("atp", "wta"):
             full = fetch_rankings(tour)
             out["rankings"][tour] = full[:10]
             rankmap.update({x["i"]: x["rank"] for x in full if x["i"]})
+    except Exception as e:
+        # scores matter more than rankings: keep the ones we published last time and
+        # carry on, rather than losing a whole tick of live results to a rankings blip
+        print(f"Rankings fetch failed ({e}); keeping the previous top-10s.", file=sys.stderr)
+        try:
+            out["rankings"] = json.load(open("data.json", encoding="utf-8")).get("rankings", {})
+        except Exception:
+            pass
+    try:
         seen = set()
         for tour in ("atp", "wta"):
             for ev in fetch_tour(tour, rankmap):
