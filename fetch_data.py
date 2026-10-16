@@ -205,6 +205,9 @@ def update_editions(slams):
             continue  # not finished yet
         doc["editions"].append({
             "year": year, "name": s["name"], "start": s.get("start", ""),
+            # venue: stored for completeness, read by no renderer today. The four 2026
+            # rows are "" — they were archived before the displayName fix (ESPN has no
+            # fullName), so don't assume it is populated if you start rendering it.
             "end": s.get("end", ""), "venue": s.get("venue", ""),
             "draws": [{"draw": dr["draw"],
                        "matches": [m for m in dr["matches"] if m["round"] in ARCHIVE_ROUNDS]}

@@ -112,6 +112,12 @@ re-uploaded here — highlights link or embed from the tournaments' own channels
 ## Roadmap
 
 - US Open 2027 dates when the USTA publishes them (the card reads "DATES TBA" until then), then 2028
+- **Australian Open week 1, Jan 2027:** tune long-name truncation on a phone against a
+  real Round of 128. At 375px a few singles rows ellipse (worst measured: 3 of 16 Round-4
+  cells, 85px clipped). The bracket's wrap treatment (score on its own line, used at
+  ≤1024px) is the likely fix, but it changes row density for all ~625 matches, so it
+  wants a live draw to tune against rather than a guess made in the off-season — and
+  AO week 1 is both the first moment it is visible again and the busiest week of the year.
 
 ## License
 
